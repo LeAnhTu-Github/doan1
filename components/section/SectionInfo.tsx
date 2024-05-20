@@ -23,21 +23,21 @@ const SectionInfo = ({ currentUser }: SidebarProps) => {
       <div className="w-full h-1/2 flex gap-2 ">
         <div className="w-1/3 h-full bg-[url('/images/nav1.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2 flex flex-col">
           <p className="text-[#797D85] text-sm font-medium">
-            Số hoạt động tham gia
+            Số khoá học đã tham gia
           </p>
-          <p className="text-[#06080F] text-2xl font-semibold pt-2">7</p>
+          <p className="text-[#06080F] text-2xl font-semibold pt-2">0</p>
         </div>
         <div className="w-1/3 h-full bg-[url('/images/nav2.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2  flex flex-col">
           <p className="text-[#797D85] text-sm font-medium">
-            Số hoạt động đang đăng kí
+            Số sự kiện đang đăng kí
           </p>
-          <p className="text-[#06080F] text-2xl font-semibold pt-2">2</p>
+          <p className="text-[#06080F] text-2xl font-semibold pt-2">0</p>
         </div>
         <div className="w-1/3 h-full bg-[url('/images/nav3.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2  flex flex-col">
           <p className="text-[#797D85] text-sm font-medium">
-            Tổng điểm tích luỹ
+            Bài kiểm tra đã làm
           </p>
-          <p className="text-[#06080F] text-2xl font-semibold pt-2">84</p>
+          <p className="text-[#06080F] text-2xl font-semibold pt-2">0</p>
         </div>
       </div>
     </div>

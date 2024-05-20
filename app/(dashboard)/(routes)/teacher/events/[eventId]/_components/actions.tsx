@@ -46,11 +46,11 @@ export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
     try {
       setIsLoading(true);
 
-      await axios.delete(`/api/courses/${courseId}`);
+      await axios.delete(`/api/events/${courseId}`);
 
-      toast.success("Course deleted");
+      toast.success("Xoá sự kiện thành công");
       router.refresh();
-      router.push(`/teacher/courses`);
+      router.push(`/teacher/events`);
     } catch {
       toast.error("Something went wrong");
     } finally {

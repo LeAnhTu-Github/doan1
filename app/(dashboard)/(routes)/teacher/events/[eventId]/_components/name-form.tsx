@@ -70,7 +70,7 @@ export const NameForm = ({ initialData, courseId }: DescriptionFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Chỉnh sửa tên
             </>
           )}
         </Button>
@@ -109,7 +109,7 @@ export const NameForm = ({ initialData, courseId }: DescriptionFormProps) => {
             />
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Lưu
               </Button>
             </div>
           </form>

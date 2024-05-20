@@ -24,7 +24,7 @@ export const columns: ColumnDef<Course>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Title
+          Tiêu đề
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -38,7 +38,7 @@ export const columns: ColumnDef<Course>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Price
+          Giá
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -61,7 +61,7 @@ export const columns: ColumnDef<Course>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Published
+          Công bố
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Course>[] = [
 
       return (
         <Badge className={cn("bg-slate-500", isPublished && "bg-sky-700")}>
-          {isPublished ? "Published" : "Draft"}
+          {isPublished ? "Đã công bố" : "Bản nháp"}
         </Badge>
       );
     },

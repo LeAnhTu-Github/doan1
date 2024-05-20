@@ -70,7 +70,7 @@ export const LinkForm = ({ initialData, courseId }: DescriptionFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Chỉnh sửa Link
             </>
           )}
         </Button>
@@ -82,7 +82,7 @@ export const LinkForm = ({ initialData, courseId }: DescriptionFormProps) => {
             !initialData.link && "text-slate-500 italic"
           )}
         >
-          {initialData.link || "No description"}
+          {initialData.link || "No link"}
         </p>
       )}
       {isEditing && (
@@ -109,7 +109,7 @@ export const LinkForm = ({ initialData, courseId }: DescriptionFormProps) => {
             />
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Lưu
               </Button>
             </div>
           </form>

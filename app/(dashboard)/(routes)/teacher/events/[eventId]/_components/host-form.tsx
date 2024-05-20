@@ -52,7 +52,7 @@ export const HostForm = ({ initialData, courseId }: DescriptionFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/events/${courseId}`, values);
-      toast.success("Course updated");
+      toast.success("Thêm ban tổ chức thành công");
       toggleEdit();
       router.refresh();
     } catch {
@@ -70,7 +70,7 @@ export const HostForm = ({ initialData, courseId }: DescriptionFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Edit host
             </>
           )}
         </Button>
@@ -109,7 +109,7 @@ export const HostForm = ({ initialData, courseId }: DescriptionFormProps) => {
             />
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Lưu
               </Button>
             </div>
           </form>

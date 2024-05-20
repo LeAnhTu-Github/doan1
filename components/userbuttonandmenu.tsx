@@ -1,6 +1,4 @@
 "use client";
-
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Avatar from "./Avatar";
 import MenuItem from "./ui/MenuItem";
 import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
@@ -81,7 +79,7 @@ const UserButtonAndMenu = () => {
                   onCLick={() => {
                     router.push("/teacher/courses"), toggleOpen();
                   }}
-                  label="Teacher Mode"
+                  label="Trang quản lý"
                 />
                 <MenuItem
                   onCLick={() => {
@@ -89,13 +87,8 @@ const UserButtonAndMenu = () => {
                   }}
                   label="Thông tin cá nhân"
                 />
-                <MenuItem
-                  onCLick={() => router.push(`/score`)}
-                  label="Điểm rèn luyện"
-                />
-
                 <hr />
-                <MenuItem onCLick={() => {}} label="Đăng xuất" />
+                <MenuItem onCLick={() => signOut()} label="Đăng xuất" />
               </>
             ) : (
               <>
@@ -104,25 +97,14 @@ const UserButtonAndMenu = () => {
                   label="Về trang chủ"
                 />
                 <MenuItem
-                  onCLick={() => router.push("/accounts/" + user?.id)}
-                  label="Thông tin tài khoản"
-                />
-                <MenuItem
-                  onCLick={() => router.push(`/score`)}
-                  label="Điểm rèn luyện"
+                  onCLick={() => {
+                    registerModal.onOpen(), toggleOpen();
+                  }}
+                  label="Thông tin cá nhân"
                 />
 
                 <hr />
-                <MenuItem
-                  onCLick={() =>
-                    signOut(() =>
-                      router.push(
-                        "https://capital-bonefish-62.accounts.dev/sign-in?redirect_url=http%3A%2F%2Flocalhost%3A3000%2F"
-                      )
-                    )
-                  }
-                  label="Đăng xuất"
-                />
+                <MenuItem onCLick={() => signOut()} label="Đăng xuất" />
               </>
             )}
           </div>

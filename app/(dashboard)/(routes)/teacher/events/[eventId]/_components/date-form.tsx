@@ -52,7 +52,7 @@ export const DateForm = ({ initialData, courseId }: DescriptionFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/events/${courseId}`, values);
-      toast.success("Course updated");
+      toast.success("Thêm ngày thành công");
       toggleEdit();
       router.refresh();
     } catch {
@@ -70,7 +70,7 @@ export const DateForm = ({ initialData, courseId }: DescriptionFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Chỉnh sửa ngày
             </>
           )}
         </Button>
@@ -82,7 +82,7 @@ export const DateForm = ({ initialData, courseId }: DescriptionFormProps) => {
             !initialData.date && "text-slate-500 italic"
           )}
         >
-          {initialData.date || "No description"}
+          {initialData.date || "No date"}
         </p>
       )}
       {isEditing && (

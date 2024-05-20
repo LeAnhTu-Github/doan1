@@ -73,7 +73,7 @@ export const AddressForm = ({
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Edit Address
             </>
           )}
         </Button>
@@ -112,7 +112,7 @@ export const AddressForm = ({
             />
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Lưu
               </Button>
             </div>
           </form>

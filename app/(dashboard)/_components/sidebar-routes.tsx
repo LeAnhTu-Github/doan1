@@ -1,20 +1,37 @@
 "use client";
 
-import { BarChart, Compass, Layout, List, CalendarRange } from "lucide-react";
+import {
+  BarChart,
+  Compass,
+  List,
+  CalendarRange,
+  Home,
+  BookMarked,
+  ScrollText,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { SidebarItem } from "./sidebar-item";
 
 const guestRoutes = [
   {
-    icon: Layout,
-    label: "Dashboard",
+    icon: Home,
+    label: "Trang chủ",
     href: "/",
   },
   {
-    icon: Compass,
-    label: "Browse",
+    icon: CalendarRange,
+    label: "Sự kiện",
+    href: "/eventPage",
+  },
+  {
+    icon: BookMarked,
+    label: "Khoá học",
     href: "/search",
+  },
+  {
+    icon: ScrollText,
+    label: "Kiểm tra",
+    href: "/test",
   },
 ];
 

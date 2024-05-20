@@ -174,3 +174,15 @@ model userRegister {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model Problem {
+  id         String    @id @default(uuid())
+  title      String?
+  difficulty String?
+  category   String?
+  time       DateTime?
+  order      Int?
+  videoId    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}

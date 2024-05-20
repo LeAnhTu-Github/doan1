@@ -52,7 +52,7 @@ export const AuthorForm = ({ initialData, courseId }: DescriptionFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/events/${courseId}`, values);
-      toast.success("Course updated");
+      toast.success("Thêm tác giả thành công");
       toggleEdit();
       router.refresh();
     } catch {
@@ -70,7 +70,7 @@ export const AuthorForm = ({ initialData, courseId }: DescriptionFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              Edit author
             </>
           )}
         </Button>

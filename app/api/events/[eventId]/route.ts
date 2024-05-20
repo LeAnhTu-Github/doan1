@@ -15,10 +15,6 @@ export async function DELETE(
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
-    
-
-
     const deletedCourse = await db.event.delete({
       where: {
         id: params.eventId,

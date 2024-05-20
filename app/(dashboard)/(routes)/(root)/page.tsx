@@ -10,6 +10,9 @@ import Section from "@/components/section/Section";
 import { db } from "@/lib/db";
 import { getCourses } from "@/actions/get-courses";
 import Footer from "@/components/Footer";
+import ProblemTable from "@/components/problem/ProblemTable";
+import ClientOnly from "@/components/ClientOnly";
+import { SetStateAction } from "react";
 interface SearchPageProps {
   searchParams: {
     title: string;
@@ -88,6 +91,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
           </div>
         </div>
       </>
+      <ProblemTable />
       {/* <CoursesList items={[...coursesInProgress, ...completedCourses]} /> */}
       <Footer />
     </div>
