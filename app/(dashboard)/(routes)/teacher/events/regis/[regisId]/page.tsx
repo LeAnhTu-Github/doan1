@@ -1,0 +1,43 @@
+import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+
+import { db } from "@/lib/db";
+
+import { DataTable } from "./_components/data-table";
+import { columns } from "./_components/columns";
+
+const RegisPage = async ({ params }: { params: { regisId: string } }) => {
+  const { userId } = auth();
+
+  if (!userId) {
+    return redirect("/");
+  }
+
+  const regisUser = await db.userRegister.findMany({
+    where: {
+      eventId: params.regisId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Add missing properties to the events array
+  const updatedEvents = regisUser.map((event) => ({
+    ...event,
+    price: null,
+    categoryId: null,
+    title: "", // Add the missing property 'title'
+    description: null, // Add the missing property 'description'
+    imageUrl: null, // Add the missing property 'imageUrl'
+    isPublished: false, // Add the missing property 'isPublished'
+  }));
+
+  return (
+    <div className="p-6">
+      <DataTable columns={columns} data={updatedEvents} users={regisUser} />
+    </div>
+  );
+};
+
+export default RegisPage;
