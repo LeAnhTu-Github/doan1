@@ -145,7 +145,7 @@ model User {
 
 model Event {
   id          String   @id @default(uuid())
-  userId      String   @unique
+  userId      String
   title       String
   name        String?
   date        String?

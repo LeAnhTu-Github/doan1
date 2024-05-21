@@ -51,6 +51,11 @@ const teacherRoutes = [
     label: "Sự kiện",
     href: "/teacher/events",
   },
+  {
+    icon: BookMarked,
+    label: "Điểm kiểm tra",
+    href: "/teacher/scores",
+  },
 ];
 
 export const SidebarRoutes = () => {

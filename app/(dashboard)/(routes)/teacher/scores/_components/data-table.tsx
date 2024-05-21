@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import * as XLSX from "xlsx";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,9 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Link from "next/link";
-import { PlusCircle } from "lucide-react";
-
+import { User } from "@prisma/client";
 import {
   Table,
   TableBody,
@@ -29,17 +28,32 @@ import { Input } from "@/components/ui/input";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  users: User[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  users,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-
+  const newArray = users.map((user) => ({
+    masv: user.masv,
+    name: user.name,
+    email: user.email,
+    class: user.class,
+    department: user.department,
+  }));
+  const handleOnExport = () => {
+    const title = "Danh sách sinh viên";
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.json_to_sheet(newArray);
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    XLSX.writeFile(wb, "users.xlsx");
+  };
   const table = useReactTable({
     data,
     columns,
@@ -58,20 +72,27 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center py-4 justify-between">
-        <Input
-          placeholder="Tìm kiếm sự kiện..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Link href="/teacher/events/create">
-          <Button>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Sự kiện mới
-          </Button>
-        </Link>
+        <div className="flex items-center gap-10">
+          <Input
+            placeholder="Tìm kiếm mã sinh viên..."
+            value={(table.getColumn("masv")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("masv")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <Input
+            placeholder="Tìm kiếm lớp..."
+            value={(table.getColumn("class")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("class")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
+        <div className="btn btn-outline btn-success">
+          <button onClick={handleOnExport}>Xuất danh sách</button>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

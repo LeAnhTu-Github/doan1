@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
     var wb = XLSX.utils.book_new();
     var ws = XLSX.utils.json_to_sheet(newArray);
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    XLSX.writeFile(wb, "export.xlsx");
+    XLSX.writeFile(wb, "sukien.xlsx");
   };
   const table = useReactTable({
     data,
@@ -75,7 +75,7 @@ export function DataTable<TData, TValue>({
     <div>
       <div className="flex items-center py-4 justify-between">
         <Input
-          placeholder="Filter courses..."
+          placeholder="Tìm kiếm người đăng kí..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("title")?.setFilterValue(event.target.value)

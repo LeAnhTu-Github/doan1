@@ -14,7 +14,7 @@ const EventClient = ({ data }: EventClientProps) => {
   return (
     <>
       <Heading title={data?.name ?? ""} subtitle={data?.date ?? ""} />
-      <div className="w-full h-[80vh] overflow-hidden rounded-xl relative">
+      <div className="w-full h-[50vh] overflow-hidden rounded-xl relative">
         <Image
           src={data?.imageUrl ?? ""}
           alt="Image"

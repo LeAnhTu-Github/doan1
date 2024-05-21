@@ -2,7 +2,13 @@
 
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  ArrowUpDown,
+  MoreHorizontal,
+  Pencil,
+  BarChartHorizontal,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -17,58 +23,87 @@ import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<Course>[] = [
   {
-    accessorKey: "title",
+    accessorKey: "masv",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Tiêu đề
+          Mã sinh viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
   {
-    accessorKey: "description",
+    accessorKey: "name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Số chương
+          Tên sinh viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
   {
-    accessorKey: "isPublished",
+    accessorKey: "email",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Công bố
+          Email
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const isPublished = row.getValue("isPublished") || false;
-
+  },
+  {
+    accessorKey: "class",
+    header: ({ column }) => {
       return (
-        <Badge className={cn("bg-slate-500", isPublished && "bg-sky-700")}>
-          {isPublished ? "Đã công bố" : "Bản nháp"}
-        </Badge>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Lớp
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "department",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Điểm
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
   },
   {
     id: "actions",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Action
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const { id } = row.original;
 
@@ -80,29 +115,17 @@ export const columns: ColumnDef<Course>[] = [
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <Link href={`/teacher/courses/${id}`}>
+          <DropdownMenuContent align="start">
+            <Link href={`/teacher/events/${id}`}>
               <DropdownMenuItem>
                 <Pencil className="h-4 w-4 mr-2" />
-                Chỉnh sửa
+                Sửa thông tin
               </DropdownMenuItem>
             </Link>
-            <Link href={`/teacher/courses/regis/${id}`}>
+            <Link href={`/teacher/events/${id}`}>
               <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Nguời đăng kí
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/courses/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Tiến độ người học
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/courses/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Xoá khoá học
+                <Trash2 className="h-4 w-4 mr-2" />
+                Xoá Người dùng
               </DropdownMenuItem>
             </Link>
           </DropdownMenuContent>

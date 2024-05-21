@@ -13,7 +13,7 @@ import { User } from "@prisma/client";
 import { courseRegister } from "@prisma/client";
 interface CourseCardProps {
   user: User;
-  regis: courseRegister;
+  regis: courseRegister | undefined;
   id: string;
   title: string;
   imageUrl: string;
@@ -52,6 +52,10 @@ export const CourseCard = ({
       class: "",
     },
   });
+  let check = false;
+  if (regis?.courseId === id) {
+    check = true;
+  }
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     // Set eventId value before submitting
     data.courseId = id;
@@ -102,8 +106,15 @@ export const CourseCard = ({
             <p className="text-md md:text-sm font-medium text-slate-700">
               {formatPrice(price)}
             </p>
-            {regis.isRegister ? (
+            {check ? (
               <>
+                <button
+                  className="btn btn-outline btn-success btn-sm"
+                  onClick={handleSubmit(onSubmit)}
+                >
+                  Đăng kí
+                </button>
+
                 <button
                   className="btn btn-outline btn-info btn-sm"
                   onClick={() => router.push(`/courses/${id}`)}
@@ -118,6 +129,12 @@ export const CourseCard = ({
                   onClick={handleSubmit(onSubmit)}
                 >
                   Đăng kí
+                </button>
+                <button
+                  className="btn btn-outline btn-info btn-sm"
+                  onClick={() => router.push(`/courses/${id}`)}
+                >
+                  Xem
                 </button>
               </>
             )}

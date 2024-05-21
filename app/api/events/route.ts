@@ -17,8 +17,8 @@ export async function POST(
 
     const event = await db.event.create({
         data: {
-            userId,
             title,
+            userId,
             // Add other missing properties here
         }
     });
