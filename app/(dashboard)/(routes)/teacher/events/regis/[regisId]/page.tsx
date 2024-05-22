@@ -22,20 +22,9 @@ const RegisPage = async ({ params }: { params: { regisId: string } }) => {
     },
   });
 
-  // Add missing properties to the events array
-  const updatedEvents = regisUser.map((event) => ({
-    ...event,
-    price: null,
-    categoryId: null,
-    title: "", // Add the missing property 'title'
-    description: null, // Add the missing property 'description'
-    imageUrl: null, // Add the missing property 'imageUrl'
-    isPublished: false, // Add the missing property 'isPublished'
-  }));
-
   return (
     <div className="p-6">
-      <DataTable columns={columns} data={updatedEvents} users={regisUser} />
+      <DataTable columns={columns} data={regisUser} users={regisUser} />
     </div>
   );
 };

@@ -51,6 +51,11 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
       userId: userId,
     },
   });
+  const regisEvents = await db.userRegister.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
   const regis = regisUsers[0];
   const courses = await getCourses({
     userId,
@@ -73,7 +78,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         />
       </div> */}
       <Section currentUsers={currentUsers} />
-      <New events={events} />
+      <New events={events} userId={userId} regis={regisEvents} />
       <>
         <div className="w-full bg-white  p-7 rounded-3xl flex flex-col gap-4 mt-4">
           <div className="flex gap-4 items-center">

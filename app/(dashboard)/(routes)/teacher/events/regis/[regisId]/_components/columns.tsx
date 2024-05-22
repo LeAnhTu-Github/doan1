@@ -3,6 +3,10 @@
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import useExcelDownloader from "react-xls";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
 import {
   ArrowUpDown,
   MoreHorizontal,
@@ -18,10 +22,51 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { userRegister } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+interface DataProps {
+  row: {
+    original: userRegister;
+  };
+}
+const CeilData = ({ row }: DataProps) => {
+  const { id, eventId } = row.original;
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const onDelete = async () => {
+    try {
+      setIsLoading(true);
 
-export const columns: ColumnDef<Course>[] = [
+      await axios.delete(`/api/eventRegis/${id}`);
+
+      toast.success("Xoá sinh viên thành công");
+      router.refresh();
+      router.push(`/teacher/events/regis/${eventId}`);
+    } catch {
+      toast.error("Xoá sinh viên thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-4 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem>
+          <Trash2 className="h-4 w-4 mr-2" />
+          <button onClick={onDelete}>Xoá sinh viên</button>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+export const columns: ColumnDef<userRegister>[] = [
   {
     accessorKey: "masv",
     header: ({ column }) => {
@@ -45,7 +90,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Họ tên
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -59,7 +103,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -73,7 +116,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Lớp
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -87,7 +129,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Câu hỏi
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -100,31 +141,10 @@ export const columns: ColumnDef<Course>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Action
+          Hành động
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const { id } = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-4 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <Link href={`/teacher/events/${id}`}>
-              <DropdownMenuItem>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Xoá sinh viên
-              </DropdownMenuItem>
-            </Link>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: CeilData,
   },
 ];

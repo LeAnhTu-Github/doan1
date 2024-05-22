@@ -20,23 +20,10 @@ const UserPage = async () => {
   });
 
   // Add missing properties to the events array
-  const updatedEvents = users.map((event) => ({
-    ...event,
-    price: null,
-    categoryId: null,
-    id: "", // Add the missing properties
-    userId: "",
-    title: "",
-    description: null,
-    imageUrl: null,
-    isPublished: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
 
   return (
     <div className="p-6">
-      <DataTable columns={columns} data={updatedEvents} users={users} />
+      <DataTable columns={columns} data={users} users={users} />
     </div>
   );
 };

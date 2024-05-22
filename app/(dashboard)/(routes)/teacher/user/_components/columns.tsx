@@ -1,7 +1,8 @@
 "use client";
 
-import { Course } from "@prisma/client";
+import { User } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
   MoreHorizontal,
@@ -9,9 +10,9 @@ import {
   BarChartHorizontal,
   Trash2,
 } from "lucide-react";
-import Link from "next/link";
-
+import axios from "axios";
 import { Button } from "@/components/ui/button";
+import useUpdateModal from "@/hooks/useUpdateModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,53 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import { on } from "events";
 
-export const columns: ColumnDef<Course>[] = [
+interface DataProps {
+  row: {
+    original: User;
+  };
+}
+const CeilData = ({ row }: DataProps) => {
+  const { id } = row.original;
+  const router = useRouter();
+  const updateModal = useUpdateModal();
+  const onUpdate = () => {
+    updateModal.onOpen(id);
+  };
+  const onDelete = async () => {
+    try {
+      await axios.delete(`/api/register/${id}`);
+      toast.success("Xoá người dùng thành công");
+      router.refresh();
+    } catch {
+      toast.error("Xoá người dùng thất bại");
+    } finally {
+    }
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-4 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem>
+          <Pencil className="h-4 w-4 mr-2" />
+          <button onClick={onUpdate}>Sửa thông tin</button>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Trash2 className="h-4 w-4 mr-2" />
+          <button onClick={onDelete}>Xoá người dùng</button>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "masv",
     header: ({ column }) => {
@@ -45,7 +91,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Tên sinh viên
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -59,7 +104,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -73,7 +117,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Lớp
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -87,7 +130,6 @@ export const columns: ColumnDef<Course>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Khoa
-          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -100,37 +142,10 @@ export const columns: ColumnDef<Course>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Action
+          Hành động
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const { id } = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-4 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <Link href={`/teacher/events/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Sửa thông tin
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/events/${id}`}>
-              <DropdownMenuItem>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Xoá Người dùng
-              </DropdownMenuItem>
-            </Link>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: CeilData,
   },
 ];

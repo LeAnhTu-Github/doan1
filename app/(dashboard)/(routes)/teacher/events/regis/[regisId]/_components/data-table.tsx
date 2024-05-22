@@ -76,9 +76,9 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center py-4 justify-between">
         <Input
           placeholder="Tìm kiếm người đăng kí..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -143,7 +143,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          Quay lại
         </Button>
         <Button
           variant="outline"
@@ -151,7 +151,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          Trang tiếp
         </Button>
       </div>
     </div>

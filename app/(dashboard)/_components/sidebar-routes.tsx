@@ -39,7 +39,7 @@ const teacherRoutes = [
   {
     icon: BarChart,
     label: "Người dùng",
-    href: "/teacher/analytics",
+    href: "/teacher/user",
   },
   {
     icon: List,
