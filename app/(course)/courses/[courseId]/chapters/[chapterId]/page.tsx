@@ -1,14 +1,13 @@
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { File } from "lucide-react";
-
+import axios from "axios";
 import { getChapter } from "@/actions/get-chapter";
 import { Banner } from "@/components/banner";
 import { Separator } from "@/components/ui/separator";
 import { Preview } from "@/components/preview";
-
+import { db } from "@/lib/db";
 import { VideoPlayer } from "./_components/video-player";
-import { CourseEnrollButton } from "./_components/course-enroll-button";
 import { CourseProgressButton } from "./_components/course-progress-button";
 
 const ChapterIdPage = async ({
@@ -30,18 +29,28 @@ const ChapterIdPage = async ({
     nextChapter,
     userProgress,
     purchase,
+    previousChapter,
   } = await getChapter({
     userId,
     chapterId: params.chapterId,
     courseId: params.courseId,
   });
-
   if (!chapter || !course) {
     return redirect("/");
   }
-
-  const isLocked = !chapter.isFree && !purchase;
-  const completeOnEnd = !!purchase && !userProgress?.isCompleted;
+  const useProgress = await db.userProgress.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  const check = useProgress.some(
+    (process) =>
+      process.chapterId === previousChapter?.id &&
+      process.userId === userId &&
+      process.isCompleted
+  );
+  const isLocked = previousChapter ? !check : false;
+  const completeOnEnd = !userProgress?.isCompleted;
 
   return (
     <div>
@@ -51,7 +60,7 @@ const ChapterIdPage = async ({
       {isLocked && (
         <Banner
           variant="warning"
-          label="You need to purchase this course to watch this chapter."
+          label="Bạn cần hoàn thành bài học trước đó để mở khoá bài học mới."
         />
       )}
       <div className="flex flex-col max-w-4xl mx-auto pb-20">
@@ -62,32 +71,20 @@ const ChapterIdPage = async ({
             courseId={params.courseId}
             nextChapterId={nextChapter?.id}
             playbackId={muxData?.playbackId!}
-            isLocked={isLocked}
+            isLocked={!!isLocked}
             completeOnEnd={completeOnEnd}
           />
         </div>
         <div>
           <div className="p-4 flex flex-col md:flex-row items-center justify-between">
             <h2 className="text-2xl font-semibold mb-2">{chapter.title}</h2>
-            {purchase ? (
-              <CourseProgressButton
-                chapterId={params.chapterId}
-                courseId={params.courseId}
-                nextChapterId={nextChapter?.id}
-                isCompleted={!!userProgress?.isCompleted}
-              />
-            ) : (
-              // <CourseEnrollButton
-              //   courseId={params.courseId}
-              //   price={course.price!}
-              // />
-              <CourseProgressButton
-                chapterId={params.chapterId}
-                courseId={params.courseId}
-                nextChapterId={nextChapter?.id}
-                isCompleted={!!userProgress?.isCompleted}
-              />
-            )}
+
+            <CourseProgressButton
+              chapterId={params.chapterId}
+              courseId={params.courseId}
+              nextChapterId={nextChapter?.id}
+              isCompleted={!!userProgress?.isCompleted}
+            />
           </div>
           <Separator />
           <div>

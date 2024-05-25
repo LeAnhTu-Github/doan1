@@ -75,7 +75,18 @@ export const getChapter = async ({
         }
       });
     }
-
+    const previousChapter = await db.chapter.findFirst({
+      where: {
+        courseId: courseId,
+        isPublished: true,
+        position: {
+          lt: chapter?.position,
+        }
+      },
+      orderBy: {
+        position: "desc",
+      }
+    });
     const userProgress = await db.userProgress.findUnique({
       where: {
         userId_chapterId: {
@@ -91,6 +102,7 @@ export const getChapter = async ({
       muxData,
       attachments,
       nextChapter,
+      previousChapter,
       userProgress,
       purchase,
     };
@@ -104,6 +116,7 @@ export const getChapter = async ({
       nextChapter: null,
       userProgress: null,
       purchase: null,
+
     }
   }
 }

@@ -18,7 +18,7 @@ interface VideoPlayerProps {
   isLocked: boolean;
   completeOnEnd: boolean;
   title: string;
-};
+}
 
 export const VideoPlayer = ({
   playbackId,
@@ -30,15 +30,19 @@ export const VideoPlayer = ({
   title,
 }: VideoPlayerProps) => {
   const [isReady, setIsReady] = useState(false);
+  const [isFirstVideoCompleted, setIsFirstVideoCompleted] = useState(false);
   const router = useRouter();
   const confetti = useConfettiStore();
 
   const onEnd = async () => {
     try {
       if (completeOnEnd) {
-        await axios.put(`/api/courses/${courseId}/chapters/${chapterId}/progress`, {
-          isCompleted: true,
-        });
+        await axios.put(
+          `/api/courses/${courseId}/chapters/${chapterId}/progress`,
+          {
+            isCompleted: true,
+          }
+        );
 
         if (!nextChapterId) {
           confetti.onOpen();
@@ -46,16 +50,15 @@ export const VideoPlayer = ({
 
         toast.success("Progress updated");
         router.refresh();
-
         if (nextChapterId) {
-          router.push(`/courses/${courseId}/chapters/${nextChapterId}`)
+          router.push(`/courses/${courseId}/chapters/${nextChapterId}`);
         }
       }
     } catch {
       toast.error("Something went wrong");
     }
-  }
-
+  };
+  console.log("isFirstVideoCompleted", isLocked);
   return (
     <div className="relative aspect-video">
       {!isReady && !isLocked && (
@@ -63,20 +66,16 @@ export const VideoPlayer = ({
           <Loader2 className="h-8 w-8 animate-spin text-secondary" />
         </div>
       )}
-      {isLocked && (
+      {isLocked && !isFirstVideoCompleted && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-800 flex-col gap-y-2 text-secondary">
           <Lock className="h-8 w-8" />
-          <p className="text-sm">
-            This chapter is locked
-          </p>
+          <p className="text-sm">Chương này đã bị khoá!</p>
         </div>
       )}
-      {!isLocked && (
+      {!isLocked && !isFirstVideoCompleted && (
         <MuxPlayer
           title={title}
-          className={cn(
-            !isReady && "hidden"
-          )}
+          className={cn(!isReady && "hidden")}
           onCanPlay={() => setIsReady(true)}
           onEnded={onEnd}
           autoPlay
@@ -84,5 +83,5 @@ export const VideoPlayer = ({
         />
       )}
     </div>
-  )
-}
+  );
+};

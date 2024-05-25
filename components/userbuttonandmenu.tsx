@@ -13,7 +13,6 @@ const UserButtonAndMenu = () => {
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
   const { user } = useUser();
-  console.log(user);
   const [isOpen, setIsOpen] = useState(false);
   const toggleOpen = useCallback(() => {
     setIsOpen((value) => !value);

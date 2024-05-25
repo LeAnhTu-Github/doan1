@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import { getProgress } from "@/actions/get-progress";
-
+import { getChapter } from "@/actions/get-chapter";
 import { CourseSidebar } from "./_components/course-sidebar";
 import { CourseNavbar } from "./_components/course-navbar";
 
@@ -40,6 +40,11 @@ const CourseLayout = async ({
           position: "asc",
         },
       },
+    },
+  });
+  const useProgress = await db.userProgress.findMany({
+    orderBy: {
+      createdAt: "desc",
     },
   });
 

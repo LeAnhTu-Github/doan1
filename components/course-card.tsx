@@ -53,9 +53,7 @@ export const CourseCard = ({
     },
   });
   let check = false;
-  if (regis?.courseId === id) {
-    check = true;
-  }
+
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     // Set eventId value before submitting
     data.courseId = id;
@@ -95,49 +93,45 @@ export const CourseCard = ({
             </span>
           </div>
         </div>
-        {progress !== null ? (
-          <CourseProgress
-            variant={progress === 100 ? "success" : "default"}
-            size="sm"
-            value={progress}
-          />
+        {progress !== null && regis?.isRegister ? (
+          <>
+            <CourseProgress
+              variant={progress === 100 ? "success" : "default"}
+              size="sm"
+              value={progress}
+            />
+            <div className="flex justify-between mt-2">
+              <button
+                className="btn btn-outline btn-success btn-sm"
+                onClick={handleSubmit(onSubmit)}
+              >
+                Đăng kí
+              </button>
+              <button
+                className="btn btn-outline btn-info btn-sm"
+                onClick={() => router.push(`/courses/${id}`)}
+              >
+                Xem
+              </button>
+            </div>
+          </>
         ) : (
           <div className="flex justify-between">
-            <p className="text-md md:text-sm font-medium text-slate-700">
-              {formatPrice(price)}
-            </p>
-            {check ? (
-              <>
-                <button
-                  className="btn btn-outline btn-success btn-sm"
-                  onClick={handleSubmit(onSubmit)}
-                >
-                  Đăng kí
-                </button>
+            <>
+              <button
+                className="btn btn-outline btn-success btn-sm"
+                onClick={handleSubmit(onSubmit)}
+              >
+                Đăng kí
+              </button>
 
-                <button
-                  className="btn btn-outline btn-info btn-sm"
-                  onClick={() => router.push(`/courses/${id}`)}
-                >
-                  Xem
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className="btn btn-outline btn-success btn-sm"
-                  onClick={handleSubmit(onSubmit)}
-                >
-                  Đăng kí
-                </button>
-                <button
-                  className="btn btn-outline btn-info btn-sm"
-                  onClick={() => router.push(`/courses/${id}`)}
-                >
-                  Xem
-                </button>
-              </>
-            )}
+              <button
+                className="btn btn-outline btn-info btn-sm"
+                onClick={() => router.push(`/courses/${id}`)}
+              >
+                Xem
+              </button>
+            </>
           </div>
         )}
       </div>

@@ -2,9 +2,16 @@
 
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Pencil } from "lucide-react";
+import { CourseProgress } from "@/components/course-progress";
+import useExcelDownloader from "react-xls";
+import {
+  ArrowUpDown,
+  MoreHorizontal,
+  Pencil,
+  BarChartHorizontal,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,63 +21,94 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-export const columns: ColumnDef<Course>[] = [
+import { UserProgress } from "@prisma/client";
+import { courseRegister } from "@prisma/client";
+import { Category } from "@prisma/client";
+type CourseWithProgressWithCategory = {
+  courseRegister: courseRegister;
+  progress: number | null;
+  userProgress: UserProgress;
+};
+export const columns: ColumnDef<CourseWithProgressWithCategory>[] = [
   {
-    accessorKey: "title",
+    accessorKey: "masv",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Tiêu đề
+          Mã sinh viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
   {
-    accessorKey: "description",
+    accessorKey: "name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Số chương
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          Họ tên
         </Button>
       );
     },
   },
   {
-    accessorKey: "isPublished",
+    accessorKey: "class",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Công bố
+          Lớp
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "progress",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Tiến trình
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const isPublished = row.getValue("isPublished") || false;
-
+      const progress = row.original.progress || 0;
+      console.log(progress);
       return (
-        <Badge className={cn("bg-slate-500", isPublished && "bg-sky-700")}>
-          {isPublished ? "Đã công bố" : "Bản nháp"}
-        </Badge>
+        <CourseProgress
+          variant={progress === 100 ? "success" : "default"}
+          size="sm"
+          value={progress}
+        />
       );
     },
   },
   {
     id: "actions",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Action
+        </Button>
+      );
+    },
     cell: ({ row }) => {
-      const { id } = row.original;
+      const id = row.original.courseRegister?.userId;
 
       return (
         <DropdownMenu>
@@ -80,29 +118,11 @@ export const columns: ColumnDef<Course>[] = [
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <Link href={`/teacher/courses/${id}`}>
+          <DropdownMenuContent align="start">
+            <Link href={`/teacher/events/${id}`}>
               <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/courses/regis/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Nguời đăng kí
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/courses/process/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Tiến độ người học
-              </DropdownMenuItem>
-            </Link>
-            <Link href={`/teacher/courses/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
-                Xoá khoá học
+                <Trash2 className="h-4 w-4 mr-2" />
+                Xoá sinh viên
               </DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
