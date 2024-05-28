@@ -1,33 +1,31 @@
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import { problemss } from "@/lib/problem";
+
 import { db } from "@/lib/db";
-import { Problem } from "@/lib/problem";
+
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 
-const UserPage = async () => {
+const ScorePage = async ({ params }: { params: { scoreId: string } }) => {
   const { userId } = auth();
 
   if (!userId) {
     return redirect("/");
   }
 
-  const users = await db.user.findMany({
-    orderBy: {
-      createdAt: "desc",
+  const scoresUser = await db.score.findMany({
+    where: {
+      testId: params.scoreId,
     },
   });
 
+  // Add missing properties to the events array
+
   return (
     <div className="p-6">
-      <DataTable
-        columns={columns}
-        data={problemss as Problem[]} // Use the correct Problem type
-        users={users}
-      />
+      <DataTable columns={columns} data={scoresUser} users={scoresUser} />
     </div>
   );
 };
 
-export default UserPage;
+export default ScorePage;

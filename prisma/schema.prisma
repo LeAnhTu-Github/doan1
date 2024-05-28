@@ -179,6 +179,9 @@ model Score {
   id        String   @id @default(uuid())
   userId    String
   testId    String
+  masv      String?
+  name      String?
+  class     String?
   score     Float?
   rank      Int?
   createdAt DateTime @default(now())

@@ -11,15 +11,24 @@ export async function POST(
   try {
     
     const { userId } = auth();
-
+    
     const { testId, score }= await req.json();
     if (!userId || !isTeacher(userId)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+    const userProfile = await db.user.findMany({
+      where: {
+        id: userId, // Provide a default value of an empty string if userId is null
+      },
+    });
+    const user = userProfile[0];
     const newScore = await db.score.create({
         data: {
           userId: userId,
           testId: testId,
+          masv: user.masv,
+          name: user.name,
+          class: user.class,
           score: score,
           rank: 1,
           createdAt: new Date(),
