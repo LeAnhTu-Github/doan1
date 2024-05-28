@@ -8,7 +8,10 @@ import Confetti from "react-confetti";
 import useWindowSize from "@/hooks/useWindowSize";
 import { twoSum } from "@/utils/problems/two-sum";
 import Playground from "./Playground/Playground";
-const Workspace = () => {
+interface WorkspaceProps {
+  id: string;
+}
+const Workspace = ({ id }: WorkspaceProps) => {
   const { width, height } = useWindowSize();
   const [success, setSuccess] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -18,6 +21,7 @@ const Workspace = () => {
       <ProblemDescription />
       <div className="bg-dark-fill-2">
         <Playground
+          pid={id}
           problem={twoSum}
           setSuccess={setSuccess}
           setSolved={setSolved}

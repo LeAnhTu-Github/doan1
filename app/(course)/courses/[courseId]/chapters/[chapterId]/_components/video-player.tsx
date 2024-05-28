@@ -58,7 +58,6 @@ export const VideoPlayer = ({
       toast.error("Something went wrong");
     }
   };
-  console.log("isFirstVideoCompleted", isLocked);
   return (
     <div className="relative aspect-video">
       {!isReady && !isLocked && (

@@ -85,7 +85,6 @@ export const columns: ColumnDef<CourseWithProgressWithCategory>[] = [
     },
     cell: ({ row }) => {
       const progress = row.original.progress || 0;
-      console.log(progress);
       return (
         <CourseProgress
           variant={progress === 100 ? "success" : "default"}

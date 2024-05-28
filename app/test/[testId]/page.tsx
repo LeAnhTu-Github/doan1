@@ -7,7 +7,7 @@ const page = ({ params }: { params: { testId: string } }) => {
   return (
     <>
       <div className=" text-black">
-        <Workspace />
+        <Workspace id={params.testId} />
       </div>
     </>
   );
