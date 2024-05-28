@@ -11,14 +11,11 @@ export async function POST(
     const { userId } = auth();
     const { title } = await req.json();
 
-    if (!userId || !isTeacher(userId)) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
 
     const event = await db.event.create({
         data: {
             title,
-            userId,
+            userId: userId!, // Assert that userId is not null
             // Add other missing properties here
         }
     });

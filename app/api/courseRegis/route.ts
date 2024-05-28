@@ -11,9 +11,7 @@ export async function POST(
     const { userId } = auth();
     const values = await req.json();
 
-    if (!userId || !isTeacher(userId)) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
+
 
     const event = await db.courseRegister.create({
         data: {
