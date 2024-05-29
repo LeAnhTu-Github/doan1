@@ -35,27 +35,26 @@ export async function POST(
         },
       });
      // Get all scores, sorted by score and createdAt
-     const scores = await db.score.findMany({
-        orderBy: [
-          {
-            score: 'desc',
-          },
-          {
-            createdAt: 'asc',
-          },
-        ],
-      });
-  
-      // Calculate rank for each score
-      for (let i = 0; i < scores.length; i++) {
-        const score = scores[i];
-        if (score.id !== newScore.id) {
-          await db.score.update({
-            where: { id: score.id },
-            data: { rank: i + 2 }, // start ranking from 2 for other scores
-          });
-        }
-      }
+     // Get all scores, sorted by score and createdAt
+const scores = await db.score.findMany({
+  orderBy: [
+    {
+      score: 'desc',
+    },
+    {
+      createdAt: 'asc',
+    },
+  ],
+});
+
+// Calculate rank for each score
+for (let i = 0; i < scores.length; i++) {
+  const score = scores[i];
+  await db.score.update({
+    where: { id: score.id },
+    data: { rank: i + 1 }, // start ranking from 1 for the highest score
+  });
+}
      
 
     return NextResponse.json(newScore);
