@@ -30,7 +30,6 @@ export const CourseCard = ({
   title,
   imageUrl,
   chaptersLength,
-  price,
   progress,
   category,
 }: CourseCardProps) => {
@@ -53,15 +52,15 @@ export const CourseCard = ({
     },
   });
   let check = false;
-
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     // Set eventId value before submitting
+    
     data.courseId = id;
-    data.userId = user.id;
-    data.masv = user.masv;
-    data.name = user.name;
-    data.email = user.email;
-    data.class = user.class;
+    data.userId = user?.id;
+    data.masv = user?.masv;
+    data.name = user?.name;
+    data.email = user?.email;
+    data.class = user?.class;
     axios
       .post(`/api/courseRegis`, data)
       .then(() => {

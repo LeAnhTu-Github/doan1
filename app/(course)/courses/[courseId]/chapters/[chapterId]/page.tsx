@@ -16,11 +16,9 @@ const ChapterIdPage = async ({
   params: { courseId: string; chapterId: string };
 }) => {
   const { userId } = auth();
-
   if (!userId) {
     return redirect("/");
   }
-
   const {
     chapter,
     course,
@@ -28,35 +26,32 @@ const ChapterIdPage = async ({
     attachments,
     nextChapter,
     userProgress,
-    purchase,
     previousChapter,
   } = await getChapter({
     userId,
     chapterId: params.chapterId,
     courseId: params.courseId,
   });
-  if (!chapter || !course) {
-    return redirect("/");
-  }
-  const useProgress = await db.userProgress.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-  const check = useProgress.some(
-    (process) =>
-      process.chapterId === previousChapter?.id &&
-      process.userId === userId &&
-      process.isCompleted
-  );
-  const isLocked = previousChapter ? !check : false;
-  const completeOnEnd = !userProgress?.isCompleted;
-
+  // const useProgress = await db.userProgress.findMany({
+  //   orderBy: {
+  //     createdAt: "desc",
+  //   },
+  // });
+  // const check = useProgress.some(
+  //   (process) =>
+  //     process.chapterId === previousChapter?.id &&
+  //     process.userId === userId &&
+  //     process.isCompleted
+  // );
+  // const isLocked = previousChapter ? !check : false;
+  const isLocked = previousChapter ? true : false;
+  //const completeOnEnd = !userProgress?.isCompleted;
+  const completeOnEnd = false;
   return (
     <div>
-      {userProgress?.isCompleted && (
+      {/* {userProgress?.isCompleted && (
         <Banner variant="success" label="Bài này đã được hoàn thành." />
-      )}
+      )} */}
       {isLocked && (
         <Banner
           variant="warning"
@@ -66,9 +61,9 @@ const ChapterIdPage = async ({
       <div className="flex flex-col max-w-4xl mx-auto pb-20">
         <div className="p-4">
           <VideoPlayer
-            chapterId={params.chapterId}
-            title={chapter.title}
-            courseId={params.courseId}
+            chapterId={params?.chapterId}
+            title={chapter?.title ?? ""}
+            courseId={params?.courseId}
             nextChapterId={nextChapter?.id}
             playbackId={muxData?.playbackId!}
             isLocked={!!isLocked}
@@ -77,20 +72,22 @@ const ChapterIdPage = async ({
         </div>
         <div>
           <div className="p-4 flex flex-col md:flex-row items-center justify-between">
-            <h2 className="text-2xl font-semibold mb-2">{chapter.title}</h2>
+            <h2 className="text-2xl font-semibold mb-2">{chapter?.title}</h2>
 
             <CourseProgressButton
-              chapterId={params.chapterId}
-              courseId={params.courseId}
+              chapterId={params?.chapterId}
+              courseId={params?.courseId}
               nextChapterId={nextChapter?.id}
-              isCompleted={!!userProgress?.isCompleted}
+              // isCompleted={!!userProgress?.isCompleted}
+              isCompleted={false}
+
             />
           </div>
           <Separator />
           <div>
-            <Preview value={chapter.description!} />
+            <Preview value={chapter?.description!} />
           </div>
-          {!!attachments.length && (
+          {!!attachments?.length && (
             <>
               <Separator />
               <div className="p-4">

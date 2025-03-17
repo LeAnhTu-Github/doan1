@@ -9,27 +9,7 @@ import { problemss } from "@/lib/problem";
 
 const ProblemTable = () => {
   const router = useRouter();
-  const [deletingId, setDeletingId] = useState("");
   const [filter, setFilter] = useState("Độ khó (All)");
-  const onDelete = useCallback(
-    (id: string) => {
-      setDeletingId(id);
-      axios
-        .delete(`/api/trainscore/${id}`)
-        .then(() => {
-          toast.success("Xoá thành công sinh viên");
-          router.refresh();
-        })
-        .catch((error) => {
-          toast.error("Có lỗi xảy ra khi xoá sinh viên");
-          toast.error(error.message);
-        })
-        .finally(() => {
-          setDeletingId("");
-        });
-    },
-    [router]
-  );
   const bodyContent = (
     <>
       <div className="w-full h-auto">
@@ -40,10 +20,10 @@ const ProblemTable = () => {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
-              <option selected>Độ khó (All)</option>
-              <option>Easy</option>
-              <option>Medium</option>
-              <option>Hard</option>
+              <option value="Độ khó (All)">Độ khó (All)</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
             </select>
           </div>
           <table className="table">

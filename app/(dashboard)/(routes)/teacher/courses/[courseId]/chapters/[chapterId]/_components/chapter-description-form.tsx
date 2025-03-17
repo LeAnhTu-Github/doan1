@@ -9,6 +9,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Chapter } from "@prisma/client";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   Form,
@@ -85,8 +86,10 @@ export const ChapterDescriptionForm = ({
         )}>
           {!initialData.description && "No description"}
           {initialData.description && (
-            <Preview
-              value={initialData.description}
+            <Textarea
+              disabled
+              value={initialData.description || "No description"}
+              className="text-sm mt-2 bg-transparent border-none focus:ring-0 text-slate-500 italic"
             />
           )}
         </div>
@@ -103,7 +106,9 @@ export const ChapterDescriptionForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Editor
+                    <Textarea
+                      disabled={isSubmitting}
+                      placeholder="e.g. 'This course is about...'"
                       {...field}
                     />
                   </FormControl>

@@ -1,19 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
-import PreferenceNav from "./PreferenceNav/PreferenceNav";
+import { useState, useEffect, useRef } from "react";
 import Split from "react-split";
-import CodeMirror from "@uiw/react-codemirror";
-import { vscodeDark } from "@uiw/codemirror-theme-vscode";
-import { javascript } from "@codemirror/lang-javascript";
 import EditorFooter from "./EditorFooter";
 import { Problem } from "@/utils/types/problem";
-import toast from "react-hot-toast";
-// import { problems } from "@/utils/problems";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { pid } from "process";
-import axios from "axios";
-import { problems } from "@/utils/problems";
-import { useRouter } from "next/navigation";
+import Editor from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
+import PreferenceNav from "./PreferenceNav/PreferenceNav";
 type PlaygroundProps = {
   pid: string;
   problem: Problem;
@@ -21,162 +14,120 @@ type PlaygroundProps = {
   setSolved: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export interface ISettings {
-  fontSize: string;
-  settingsModalIsOpen: boolean;
-  dropdownIsOpen: boolean;
-}
-
-const Playground: React.FC<PlaygroundProps> = ({
-  pid,
-  problem,
-  setSuccess,
-  setSolved,
-}) => {
-  const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
-  let [userCode, setUserCode] = useState<string>(problem.starterCode);
-
-  const [fontSize, setFontSize] = useLocalStorage("lcc-fontSize", "16px");
-  const router = useRouter();
-  const [settings, setSettings] = useState<ISettings>({
-    fontSize: fontSize,
-    settingsModalIsOpen: false,
-    dropdownIsOpen: false,
-  });
-
-  //   const {
-  //     query: { pid },
-  //   } = useRouter();
-
-  const handleSubmit = async () => {
-    try {
-      userCode = userCode.slice(userCode.indexOf(problem.starterFunctionName));
-      const cb = new Function(`return ${userCode}`)();
-      const handler = problem.handlerFunction;
-      if (typeof handler === "function") {
-        const success = handler(cb);
-        if (typeof success === "number" && success > 0) {
-          await axios
-            .post(`/api/test`, {
-              testId: pid,
-              score: success,
-            })
-            .then(() => {
-              toast.success(
-                "Chúc mừng! Bạn đã giải đúng bài toán này! với điểm số là: " +
-                  success
-              );
-              router.refresh();
-              router.push("/");
-            })
-            .catch((error) => {
-              toast.error("Đăng kí thất bại." + error.message);
-            })
-            .finally(() => {});
-          setSuccess(true);
-          setTimeout(() => {
-            setSuccess(false);
-          }, 4000);
-          setSolved(true);
-        } else if (success === true) {
-          toast.success("Chúc mừng! Bạn đã giải đúng bài toán này!");
-          setSuccess(true);
-          setTimeout(() => {
-            setSuccess(false);
-          }, 4000);
-          setSolved(true);
-        } else {
-          toast.error("Một hoặc nhiều trường hợp thử nghiệm không thành công!");
-        }
-      }
-    } catch (error: any) {
-      toast.error("Có một lỗi xảy ra: " + error.message);
-      if (
-        error.message.startsWith(
-          "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:"
-        )
-      ) {
-        toast.error("Một hoặc nhiều trường hợp thử nghiệm không thành công!");
-      } else {
-        toast.error(error.message);
-      }
-    }
-  };
+const Playground: React.FC<PlaygroundProps> = ({ pid, problem, setSuccess, setSolved }) => {
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [activeTestCaseId, setActiveTestCaseId] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showConsole, setShowConsole] = useState(false);
+  const [output, setOutput] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [fontSize] = useLocalStorage("lcc-fontSize", "16px");
 
   useEffect(() => {
-    const code = localStorage.getItem(`code-${pid}`);
-    setUserCode(code ? JSON.parse(code) : problem.starterCode);
-  }, [pid, problem.starterCode]);
+    const storedCode = localStorage.getItem(`code-${pid}`);
+    if (storedCode) editorRef.current?.setValue(JSON.parse(storedCode));
+  }, [pid]);
 
-  const onChange = (value: string) => {
-    setUserCode(value);
-    localStorage.setItem(`code-${pid}`, JSON.stringify(value));
+  const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+    editorRef.current = editor;
+  };
+  const languageMap = {
+    javascript: 63,
+    python: 71,
+    cpp: 54,
+    java: 62,
+    csharp: 51,
   };
 
+  const handleSubmit = async () => {
+    if (!editorRef.current) return;
+    setIsLoading(true);
+    setOutput("");
+  
+    const code = editorRef.current.getValue();
+    const languageId = languageMap[selectedLanguage as keyof typeof languageMap];
+  
+    try {
+      const submissionRes = await fetch("https://judge0-ce.p.rapidapi.com/submissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-RapidAPI-Key": "f7449f873emsheb1b3cbf84504a2p1245d0jsn6d020d932ea1",
+          "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
+        },
+        body: JSON.stringify({
+          source_code: code,
+          language_id: languageId,
+          stdin: problem.examples[activeTestCaseId].inputText,
+        }),
+      });
+  
+      if (!submissionRes.ok) throw new Error("Failed to submit code");
+      const { token } = await submissionRes.json();
+  
+      let resultRes;
+      do {
+        resultRes = await fetch(`https://judge0-ce.p.rapidapi.com/submissions/${token}?base64_encoded=false`, {
+          headers: {
+            "X-RapidAPI-Key": "f7449f873emsheb1b3cbf84504a2p1245d0jsn6d020d932ea1",
+            "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
+          },
+        });
+      } while (!resultRes.ok);
+  
+      const result = await resultRes.json();
+      const outputMessage = result.stdout || result.stderr || result.compile_output || "Unknown error occurred";
+      setOutput(outputMessage);
+    } catch (error) {
+      setOutput(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
   return (
-    <div className="flex flex-col bg-dark-layer-1 relative overflow-x-hidden">
-      <PreferenceNav settings={settings} setSettings={setSettings} />
-
-      <Split
-        className="h-[calc(100vh-94px)]"
-        direction="vertical"
-        sizes={[60, 40]}
-        minSize={60}
-      >
-        <div className="w-full overflow-auto">
-          <CodeMirror
-            value={userCode}
-            theme={vscodeDark}
-            onChange={onChange}
-            extensions={[javascript()]}
-            style={{ fontSize: settings.fontSize }}
-          />
-        </div>
-        <div className="w-full px-5 overflow-auto">
-          {/* testcase heading */}
-          <div className="flex h-10 items-center space-x-6">
-            <div className="relative flex h-full flex-col justify-center cursor-pointer">
-              <div className="text-sm font-medium leading-5 text-white">
-                Testcases
-              </div>
-              <hr className="absolute bottom-0 h-0.5 w-full rounded-full border-none bg-white" />
-            </div>
+    <>
+      <PreferenceNav setLanguage={setSelectedLanguage} />
+      <div className="flex flex-col bg-dark-layer-1 relative overflow-x-hidden">
+        <Split className="h-[calc(100vh-94px)]" direction="vertical" sizes={[60, 40]} minSize={60}>
+          <div className="w-full overflow-auto">
+            <Editor height="90vh" defaultLanguage="javascript" defaultValue="// Start coding..." onMount={handleEditorDidMount} />
           </div>
-
-          <div className="flex">
-            {problem.examples.map((example, index) => (
-              <div
-                className="mr-2 items-start mt-2 "
-                key={example.id}
-                onClick={() => setActiveTestCaseId(index)}
-              >
-                <div className="flex flex-wrap items-center gap-y-4">
-                  <div
-                    className={`font-medium items-center transition-all focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 relative rounded-lg px-4 py-1 cursor-pointer whitespace-nowrap
-										${activeTestCaseId === index ? "text-white" : "text-gray-500"}
-									`}
-                  >
-                    Case {index + 1}
-                  </div>
+          <div className="w-full px-5 overflow-auto">
+            {showConsole ? (
+              <div className="font-semibold my-4 text-white">
+                <p className="text-sm font-medium mt-4">Output:</p>
+                <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
+                  {output || ""}
                 </div>
               </div>
-            ))}
+            ) : (
+              <>
+                <div className="flex h-10 items-center space-x-6">
+                  <div className="text-sm font-medium text-white">Testcases</div>
+                </div>
+                <div className="flex">
+                  {problem.examples.map((example, index) => (
+                    <div key={example.id} className="mr-2 mt-2" onClick={() => setActiveTestCaseId(index)}>
+                      <div className={`px-4 py-1 rounded-lg cursor-pointer ${activeTestCaseId === index ? "text-white" : "text-gray-500"}`}>
+                        Case {index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="font-semibold my-4 text-white">
+                  <p className="text-sm font-medium mt-4">Input:</p>
+                  <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                    {problem.examples[activeTestCaseId].inputText}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-
-          <div className="font-semibold my-4">
-            <p className="text-sm font-medium mt-4 text-white">Input:</p>
-            <div className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent text-white mt-2">
-              {problem.examples[activeTestCaseId].inputText}
-            </div>
-            <p className="text-sm font-medium mt-4 text-white">Output:</p>
-            <div className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent text-white mt-2">
-              {problem.examples[activeTestCaseId].outputText}
-            </div>
-          </div>
-        </div>
-      </Split>
-      <EditorFooter handleSubmit={handleSubmit} />
-    </div>
+        </Split>
+        <EditorFooter handleSubmit={handleSubmit} setShowConsole={setShowConsole} showConsole={showConsole} />
+      </div></>
   );
 };
 export default Playground;

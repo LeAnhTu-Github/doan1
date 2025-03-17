@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import New from "@/components/news/New";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
@@ -20,16 +20,11 @@ interface SearchPageProps {
   };
 }
 export default async function Dashboard({ searchParams }: SearchPageProps) {
-  const currentUsers = await currentUser();
-
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return redirect("/");
   }
 
-  const { completedCourses, coursesInProgress } = await getDashboardCourses(
-    userId
-  );
   const users = await db.user.findMany({
     where: {
       id: userId,
@@ -57,27 +52,15 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
     },
   });
   const regis = regisUsers[0];
+  const resolvedSearchParams = await searchParams;
   const courses = await getCourses({
     userId,
-    ...searchParams,
+    ...resolvedSearchParams,
   });
 
   return (
     <div className="p-6 space-y-4 bg-[#F3F3F3]">
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard
-          icon={Clock}
-          label="In Progress"
-          numberOfItems={coursesInProgress.length}
-        />
-        <InfoCard
-          icon={CheckCircle}
-          label="Completed"
-          numberOfItems={completedCourses.length}
-          variant="success"
-        />
-      </div> */}
-      <Section currentUsers={currentUsers} />
+      <Section />
       <New events={events} userId={userId} regis={regisEvents} />
       <>
         <div className="w-full bg-white  p-7 rounded-3xl flex flex-col gap-4 mt-4">

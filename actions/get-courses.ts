@@ -1,5 +1,4 @@
 import { Category, Course } from "@prisma/client";
-
 import { getProgress } from "@/actions/get-progress";
 import { db } from "@/lib/db";
 
@@ -18,53 +17,42 @@ type GetCourses = {
 export const getCourses = async ({
   userId,
   title,
-  categoryId
+  categoryId,
 }: GetCourses): Promise<CourseWithProgressWithCategory[]> => {
   try {
+    const whereCondition: any = {
+      isPublished: true,
+      title: title ? { contains: title, mode: "insensitive" } : undefined,
+    };
+
+    // Chỉ thêm categoryId vào điều kiện nếu nó hợp lệ
+    if (categoryId && categoryId.trim() !== "") {
+      whereCondition.categoryId = categoryId;
+    }
+
     const courses = await db.course.findMany({
-      where: {
-        isPublished: true,
-        title: {
-          contains: title,
-        },
-        categoryId,
-      },
+      where: whereCondition,
       include: {
         category: true,
         chapters: {
-          where: {
-            isPublished: true,
-          },
-          select: {
-            id: true,
-          }
+          where: { isPublished: true },
+          select: { id: true },
         },
-        purchases: {
-          where: {
-            userId,
-          }
-        }
+        purchases: { where: { userId } },
       },
-      orderBy: {
-        createdAt: "desc",
-      }
+      orderBy: { createdAt: "desc" },
     });
 
     const coursesWithProgress: CourseWithProgressWithCategory[] = await Promise.all(
-      courses.map(async course => {
-
+      courses.map(async (course) => {
         const progressPercentage = await getProgress(userId, course.id);
-
-        return {
-          ...course,
-          progress: progressPercentage,
-        };
+        return { ...course, progress: progressPercentage };
       })
     );
 
     return coursesWithProgress;
   } catch (error) {
-    console.log("[GET_COURSES]", error);
+    console.error("[GET_COURSES] Error:", error);
     return [];
   }
-}
+};
