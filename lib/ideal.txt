@@ -1,0 +1,26 @@
+project/
+├── app/
+│   ├── api/
+│   │   ├── contests/
+│   │   │   ├── route.ts             // API tạo/lấy danh sách cuộc thi
+│   │   │   └── [id]/
+│   │   │       └── route.ts        // API lấy chi tiết cuộc thi
+│   │   ├── submissions/
+│   │   │   └── route.ts           // API gửi bài nộp lên Judge0
+│   │   └── participants/
+│   │       └── route.ts           // API đăng ký tham gia cuộc thi
+│   ├── contests/
+│   │   ├── page.tsx               // Trang danh sách cuộc thi
+│   │   └── [id]/
+│   │       ├── page.tsx           // Trang chi tiết cuộc thi
+│   │       └── submit/
+│   │           └── page.tsx       // Trang gửi bài nộp
+│   ├── layout.tsx                 // Layout chung
+│   └── page.tsx                   // Trang chủ
+├── lib/
+│   ├── prisma.ts                  // Khởi tạo Prisma Client
+│   └── judge0.ts                  // Hàm gọi API Judge0
+├── prisma/
+│   └── schema.prisma              // File schema bạn đã cung cấp
+├── public/                        // Tài nguyên tĩnh
+└── package.json

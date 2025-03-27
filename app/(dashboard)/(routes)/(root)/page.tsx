@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import New from "@/components/news/New";
-import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { CoursesList } from "@/components/courses-list";
 import { InfoCard } from "./_components/info-card";
 import { SearchInput } from "@/components/search-input";
@@ -10,9 +9,7 @@ import Section from "@/components/section/Section";
 import { db } from "@/lib/db";
 import { getCourses } from "@/actions/get-courses";
 import Footer from "@/components/Footer";
-import ProblemTable from "@/components/problem/ProblemTable";
-import ClientOnly from "@/components/ClientOnly";
-import { SetStateAction } from "react";
+import ProblemsPage from "@/components/problem/page";
 interface SearchPageProps {
   searchParams: {
     title: string;
@@ -27,7 +24,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
 
   const users = await db.user.findMany({
     where: {
-      id: userId,
+      clerkUserId: userId,
     },
   });
   const user = users[0];
@@ -79,7 +76,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
           </div>
         </div>
       </>
-      <ProblemTable />
+      <ProblemsPage />
       {/* <CoursesList items={[...coursesInProgress, ...completedCourses]} /> */}
       <Footer />
     </div>

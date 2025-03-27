@@ -34,7 +34,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps) => {
   });
   const users = await db.user.findMany({
     where: {
-      id: userId,
+      clerkUserId: userId,
     },
   });
   const user = users[0];

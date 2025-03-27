@@ -1,7 +1,7 @@
 import React from "react";
 import { Navbar } from "../(dashboard)/_components/navbar";
 import { Sidebar } from "../(dashboard)/_components/sidebar";
-import ProblemTable from "@/components/problem/ProblemTable";
+import ProblemsPage from "@/components/problem/page";
 const page = () => {
   return (
     <div className="h-full">
@@ -12,7 +12,7 @@ const page = () => {
         <Sidebar />
       </div>
       <main className="md:pl-56 pt-[80px] h-full">
-        <ProblemTable />
+        <ProblemsPage />
       </main>
     </div>
   );

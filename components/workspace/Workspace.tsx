@@ -1,12 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Split from "react-split";
 import ProblemDescription from "./ProblemDescription";
-// import Playground from "./Playground/Playground";
 import { Problem } from "@/utils/types/problem";
 import Confetti from "react-confetti";
 import useWindowSize from "@/hooks/useWindowSize";
-import { twoSum } from "@/utils/problems/two-sum";
 import Playground from "./Playground/Playground";
 interface WorkspaceProps {
   id: string;
@@ -15,17 +13,44 @@ const Workspace = ({ id }: WorkspaceProps) => {
   const { width, height } = useWindowSize();
   const [success, setSuccess] = useState(false);
   const [solved, setSolved] = useState(false);
+  const [problem, setProblem] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProblem = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/problems/${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch problem");
+        }
+        const data = await response.json();
+        setProblem(data);
+      } catch (error) {
+        console.error("Error fetching problem:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProblem();
+    }
+  }, [id]);
+
 
   return (
     <Split className="split" minSize={0}>
-      <ProblemDescription />
+      <ProblemDescription ProblemId={id} />
       <div className="bg-dark-fill-2">
-        <Playground
-          pid={id}
-          problem={twoSum}
-          setSuccess={setSuccess}
-          setSolved={setSolved}
-        />
+        {problem && (
+          <Playground
+            ProblemId={id}
+            problem={problem}
+            setSuccess={setSuccess}
+            setSolved={setSolved}
+          />
+        )}
         {success && (
           <Confetti
             gravity={0.3}

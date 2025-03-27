@@ -10,9 +10,6 @@ export async function POST(
   try {
     const { userId } = auth();
     const values = await req.json();
-
-
-
     const event = await db.courseRegister.create({
         data: {
             userId,

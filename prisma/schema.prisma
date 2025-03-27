@@ -4,9 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
-  binaryTargets   = ["native", "darwin", "darwin-arm64"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin", "darwin-arm64"]
 }
 
 model Course {
@@ -89,7 +88,8 @@ model UserProgress {
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  @@unique([userId, chapterId]) 
+
+  @@unique([userId, chapterId])
 }
 
 model Purchase {
@@ -110,16 +110,19 @@ model StripeCustomer {
 }
 
 model User {
-  id         String   @id @map("_id")
-  masv       String?
-  name       String?
-  email      String?  @unique
-  class      String?
-  department String?
-  image      String?
-  role       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+  clerkUserId         String               @unique // ID của Clerk
+  masv                String?
+  name                String?
+  email               String?              @unique
+  class               String?
+  department          String?
+  image               String?
+  role                String?
+  contestParticipants ContestParticipant[]
+  submissions         Submission[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Event {
@@ -168,13 +171,92 @@ model Score {
 }
 
 model Problem {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  title      String?
-  difficulty String?
-  category   String?
-  time       DateTime?
-  order      Int?
-  videoId    String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  title            String?
+  difficulty       String?
+  category         String?
+  language         Int?
+  time             DateTime?
+  order            Int?
+  testCases        TestCase[]
+  problemStatement String
+  examples         Json
+  constraints      String
+  status           Boolean?
+  metadata        Json             // Lưu thông tin về input/output format
+  codeTemplate    Json             // Lưu template code cho các ngôn ngữ khác nhau
+  functionName    String          // Tên hàm cần implement
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  contestProblems  ContestProblem[]
+  submissions      Submission[]
+}
+
+model TestCase {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  problemId String   @db.ObjectId
+  problem   Problem  @relation(fields: [problemId], references: [id])
+  input     Json
+  expected  String // Kết quả mong đợi
+  isHidden  Boolean  @default(false) // Trạng thái test case (ẩn hay không)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Contest: Thông tin về cuộc thi
+model Contest {
+  id           String               @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String?
+  imageUrl     String?
+  startTime    DateTime
+  endTime      DateTime
+  problems     ContestProblem[]
+  participants ContestParticipant[]
+  submissions  Submission[] // Liên kết với bài nộp
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  // 🔹 Thêm các trường mới
+  joinCode String? @unique // Mã tham gia cuộc thi
+  qrCode   String? // Lưu URL mã QR hoặc đường dẫn ảnh
+  isPublic Boolean @default(false) // Công khai hay không
+  status   String  @default("upcoming") // Trạng thái cuộc thi (upcoming, ongoing, ended)
+}
+
+model ContestProblem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  contestId String  @db.ObjectId
+  problemId String  @db.ObjectId
+  contest   Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model ContestParticipant {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  contestId String  @db.ObjectId
+  userId    String  @db.ObjectId
+  score     Float   @default(0)
+  rank      Int?
+  contest   Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId]) // Đảm bảo mỗi người chỉ tham gia 1 lần
+}
+
+model Submission {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  contestId   String   @db.ObjectId
+  problemId   String   @db.ObjectId
+  code        String
+  language    String
+  status      String // (Accepted, Wrong Answer, Time Limit Exceeded, etc.)
+  score       Float?
+  submittedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestId, problemId]) // Mỗi người có thể nộp bài nhiều lần nhưng chỉ lưu điểm cao nhất
 }

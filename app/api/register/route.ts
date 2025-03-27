@@ -17,7 +17,7 @@ export async function POST(
 
     const course = await db.user.create({
       data: {
-        id: user?.id,
+        clerkUserId: userId,
         email: user?.emailAddresses[0].emailAddress,
         image: user?.imageUrl,
         role: "USER",
