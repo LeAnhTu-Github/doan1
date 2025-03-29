@@ -20,7 +20,6 @@ model Course {
   category       Category?        @relation(fields: [categoryId], references: [id])
   chapters       Chapter[]
   attachments    Attachment[]
-  purchases      Purchase[]
   courseRegister courseRegister[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -90,23 +89,6 @@ model UserProgress {
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, chapterId])
-}
-
-model Purchase {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  courseId  String   @db.ObjectId
-  course    Course   @relation(fields: [courseId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model StripeCustomer {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String   @unique
-  stripeCustomerId String   @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
 }
 
 model User {

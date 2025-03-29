@@ -25,7 +25,6 @@ export const getCourses = async ({
       title: title ? { contains: title, mode: "insensitive" } : undefined,
     };
 
-    // Chỉ thêm categoryId vào điều kiện nếu nó hợp lệ
     if (categoryId && categoryId.trim() !== "") {
       whereCondition.categoryId = categoryId;
     }
@@ -38,7 +37,6 @@ export const getCourses = async ({
           where: { isPublished: true },
           select: { id: true },
         },
-        purchases: { where: { userId } },
       },
       orderBy: { createdAt: "desc" },
     });

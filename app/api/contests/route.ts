@@ -4,7 +4,16 @@ import { NextResponse } from 'next/server';
 // Lấy danh sách cuộc thi
 export async function GET() {
   try {
-    const contests = await db.contest.findMany({
+    // Lấy 3 cuộc thi công khai, đang diễn ra (status: "ongoing")
+    const publicContests = await db.contest.findMany({
+      where: {
+        isPublic: true,
+        status: "upcoming", // Chỉ lấy các cuộc thi đang diễn ra
+      },
+      orderBy: {
+        startTime: "desc", // Sắp xếp theo thời gian bắt đầu giảm dần
+      },
+      take: 3, // Lấy 3 cuộc thi
       include: {
         problems: {
           include: {
@@ -19,7 +28,10 @@ export async function GET() {
         submissions: true, // Lấy danh sách bài nộp
       },
     });
-    return NextResponse.json(contests, { status: 200 });
+
+
+    // Trả về cả hai danh sách
+    return NextResponse.json({ publicContests }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch contests', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -28,7 +40,7 @@ export async function GET() {
   }
 }
 
-// Tạo một cuộc thi mới
+// Tạo một cuộc thi mới (giữ nguyên logic POST của bạn)
 export async function POST(request: Request) {
   try {
     const body = await request.json();

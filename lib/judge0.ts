@@ -1,6 +1,5 @@
-// const JUDGE0_API_KEY = "f7449f873emsheb1b3cbf84504a2p1245d0jsn6d020d932ea1";
-const JUDGE0_API_KEY = "7509d67599msha5b7e42242637b7p1c66d2jsn366cb2687f6e";
-const JUDGE0_HOST = "judge0-ce.p.rapidapi.com";
+const JUDGE0_HOST = "localhost:2358";
+const JUDGE0_PROTOCOL = "http";
 
 export const languageMap = {
   javascript: 63,
@@ -46,13 +45,12 @@ export interface Judge0Result {
 
 const apiHeaders = {
   "Content-Type": "application/json",
-  "X-RapidAPI-Key": JUDGE0_API_KEY,
-  "X-RapidAPI-Host": JUDGE0_HOST,
+  "Accept": "application/json"
 };
 
 export async function submitCode(request: SubmissionRequest): Promise<string> {
   try {
-    const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions", {
+    const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=false`, {
       method: "POST",
       headers: apiHeaders,
       body: JSON.stringify(request),
@@ -65,15 +63,17 @@ export async function submitCode(request: SubmissionRequest): Promise<string> {
     const data: SubmissionResponse = await response.json();
     return data.token;
   } catch (error) {
-    throw new Error(`Submission error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error('Submit code error:', error);
+    throw error;
   }
 }
 
 export async function getSubmissionResult(token: string): Promise<Judge0Result> {
   try {
-    const response = await fetch(`https://judge0-ce.p.rapidapi.com/submissions/${token}?base64_encoded=false`, {
-      headers: apiHeaders,
-    });
+    const response = await fetch(
+      `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions/${token}?base64_encoded=false`, 
+      { headers: apiHeaders }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to get result: ${response.statusText}`);
@@ -87,21 +87,79 @@ export async function getSubmissionResult(token: string): Promise<Judge0Result> 
 
 export async function executeCode(request: SubmissionRequest): Promise<string> {
   try {
-    // Gửi code lên Judge0
-    const token = await submitCode(request);
+    const url = `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`;
 
-    // Đợi và lấy kết quả
-    let result: Judge0Result;
-    do {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      result = await getSubmissionResult(token);
-    } while (result.status?.id === 1 || result.status?.id === 2); // 1: Queued, 2: Processing
+    const response = await fetch(url, {
+      method: "POST",
+      headers: apiHeaders,
+      body: JSON.stringify(request),
+    });
 
-    // Trả về output hoặc error message
-    return result.stdout || result.stderr || result.compile_output || "Unknown error";
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response body:', errorText);
+      throw new Error(`Failed to execute code: ${response.status} ${response.statusText}. ${errorText}`);
+    }
+
+    const result: Judge0Result = await response.json();
+    if (result.stderr) {
+      console.error('Runtime error:', result.stderr);
+      return `Runtime Error: ${result.stderr}`;
+    }
+
+    if (result.compile_output) {
+      console.error('Compilation error:', result.compile_output);
+      return `Compilation Error: ${result.compile_output}`;
+    }
+
+    if (!result.stdout && !result.stderr && !result.compile_output) {
+      console.warn('No output received from Judge0');
+      return "No output received from the judge";
+    }
+
+    return result.stdout || "No output";
   } catch (error) {
-    throw new Error(`Execution error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error('Detailed execution error:', {
+      name: error instanceof Error ? error.name : 'Unknown error type',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    if (error instanceof Error) {
+      return `Error: ${error.message}`;
+    }
+    return "Unknown execution error occurred";
   }
 }
+
+// Thêm hàm kiểm tra health của Judge0
+export async function checkJudge0Health(): Promise<boolean> {
+  try {
+    const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/health`, {
+      headers: apiHeaders
+    });
+    
+    console.log('Health check response:', {
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Health check error response:', errorText);
+    }
+
+    return response.ok;
+  } catch (error) {
+    console.error('Health check error:', {
+      name: error instanceof Error ? error.name : 'Unknown error type',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return false;
+  }
+}
+
 
 

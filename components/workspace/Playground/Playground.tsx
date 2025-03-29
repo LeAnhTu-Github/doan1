@@ -48,8 +48,8 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       return "// Start coding...";
     }
   });
-  const [testCaseOutputs, setTestCaseOutputs] = useState<string[]>([]);
-  const [testCaseResults, setTestCaseResults] = useState<boolean[]>([]);
+  const [testCaseOutputs, setTestCaseOutputs] = useState<Record<string, string[]>>({});
+  const [testCaseResults, setTestCaseResults] = useState<Record<string, boolean[]>>({});
 
   useEffect(() => {
     const storedCode = localStorage.getItem(`code-${ProblemId}-${selectedLanguage}`);
@@ -138,12 +138,10 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
     }
 
     try {
-      // Parse metadata từ problem
       const metadata = typeof problem.metadata === 'string' 
         ? JSON.parse(problem.metadata) 
         : problem.metadata;
 
-      // Wrap code người dùng với CodeWrapper
       const wrappedCode = CodeWrapperService.generateWrapper(
         userCode,
         selectedLanguage,
@@ -154,15 +152,12 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       const executionResults = await Promise.all(
         testCases.map(async (testCase) => {
           const inputJson = JSON.stringify(testCase.input);
-          console.log(1111, wrappedCode);
-          console.log(2222, inputJson);
           const result = await executeCode({
             source_code: wrappedCode,
             language_id: languageId,
             stdin: inputJson,
           });
 
-          // Parse output và so sánh với kết quả mong đợi
           const parsedOutput = result.trim();
           return {
             output: parsedOutput,
@@ -171,12 +166,19 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
         })
       );
 
-      // Tách riêng results và outputs
+      // Cập nhật results và outputs cho problem hiện tại
       const results = executionResults.map(result => result.passed);
       const outputs = executionResults.map(result => result.output);
   
-      setTestCaseResults(results);
-      setTestCaseOutputs(outputs);
+      setTestCaseResults(prev => ({
+        ...prev,
+        [ProblemId]: results
+      }));
+      
+      setTestCaseOutputs(prev => ({
+        ...prev,
+        [ProblemId]: outputs
+      }));
   
       // Hiển thị output cho test case đang active
       setOutput(outputs[activeTestCaseId] || "No output");
@@ -198,7 +200,6 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   if (isLoading) {
     return <div className="text-white">Loading test cases...</div>;
   }
-
   const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
 
   return (
@@ -240,12 +241,13 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
                         onClick={() => setActiveTestCaseId(index)}
                       >
                         <div
-                          className={`px-4 py-1 rounded-lg cursor-pointer border ${testCaseResults[index]
+                          className={`px-4 py-1 rounded-lg cursor-pointer border ${
+                            testCaseResults[ProblemId]?.[index]
                               ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500"
                               : activeTestCaseId === index
-                                ? "border-white text-white"
-                                : "border-white text-gray-500"
-                            }`}
+                              ? "border-white text-white"
+                              : "border-white text-gray-500"
+                          }`}
                         >
                         Case {index + 1}
                       </div>
@@ -264,7 +266,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
                       </div>
                       <p className="text-sm font-medium mt-4">Actual Output:</p>
                       <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                        {testCaseOutputs[activeTestCaseId] || "Not executed yet"}
+                        {testCaseOutputs[ProblemId]?.[activeTestCaseId] || "Not executed yet"}
                       </div>
                     </div>
                   )}

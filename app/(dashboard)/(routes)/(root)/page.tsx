@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { getCourses } from "@/actions/get-courses";
 import Footer from "@/components/Footer";
 import ProblemsPage from "@/components/problem/page";
+import ContestPage from "@/components/contests/Contest";
 interface SearchPageProps {
   searchParams: {
     title: string;
@@ -58,6 +59,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
   return (
     <div className="p-6 space-y-4 bg-[#F3F3F3]">
       <Section />
+      <ContestPage />
       <New events={events} userId={userId} regis={regisEvents} />
       <>
         <div className="w-full bg-white  p-7 rounded-3xl flex flex-col gap-4 mt-4">
@@ -77,6 +79,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         </div>
       </>
       <ProblemsPage />
+
       {/* <CoursesList items={[...coursesInProgress, ...completedCourses]} /> */}
       <Footer />
     </div>
