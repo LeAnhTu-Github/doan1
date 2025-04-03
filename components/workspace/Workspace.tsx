@@ -7,13 +7,12 @@ import Confetti from "react-confetti";
 import useWindowSize from "@/hooks/useWindowSize";
 import Playground from "./Playground/Playground";
 
-interface WorkspaceProps {
+type WorkspaceProps = {
   id: string;
-  setSolvedProblems?: React.Dispatch<React.SetStateAction<Set<string>>>;
-}
+  setProblemScores: (problemId: string, score: number) => void;
+};
 
-
-const Workspace = ({ id, setSolvedProblems }: WorkspaceProps) => {
+const Workspace = ({ id, setProblemScores }: WorkspaceProps) => {
   const { width, height } = useWindowSize();
   const [success, setSuccess] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -62,14 +61,10 @@ const Workspace = ({ id, setSolvedProblems }: WorkspaceProps) => {
 
   // Tách riêng effect cho việc xử lý success
   useEffect(() => {
-    if (success && setSolvedProblems && id) {
-      setSolvedProblems(prev => {
-        const newSet = new Set(prev);
-        newSet.add(id);
-        return newSet;
-      });
+    if (success && setProblemScores && id) {
+      setProblemScores(id, 100); // Assuming a score of 100 for now
     }
-  }, [success, id, setSolvedProblems]);
+  }, [success, id, setProblemScores]);
 
   // Effect cho confetti
   useEffect(() => {
@@ -92,7 +87,7 @@ const Workspace = ({ id, setSolvedProblems }: WorkspaceProps) => {
             ProblemId={id}
             problem={problem}
             setSuccess={setSuccess}
-            setSolved={setSolved}
+            setProblemScores={setProblemScores}
           />
         )}
         

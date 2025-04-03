@@ -1,32 +1,36 @@
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+
 import { db } from "@/lib/db";
-import { Problem } from "@prisma/client";
+
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 
-const UserPage = async () => {
+const CoursesPage = async () => {
   const { userId } = auth();
 
   if (!userId) {
     return redirect("/");
   }
 
-  const users = await db.user.findMany({
+  const contests = await db.contest.findMany({
     orderBy: {
       createdAt: "desc",
     },
+    include: {
+      _count: {
+        select: {
+          participants: true,
+          problems: true,
+        }
+      }
+    }
   });
-
   return (
     <div className="p-6">
-      {/* <DataTable
-        columns={columns}
-        data={problemss as Problem[]} // Use the correct Problem type
-        users={users}
-      /> */}
+      <DataTable columns={columns} data={contests} />
     </div>
   );
 };
 
-export default UserPage;
+export default CoursesPage;

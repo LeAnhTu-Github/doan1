@@ -9,12 +9,13 @@ import PreferenceNav from "./PreferenceNav/PreferenceNav";
 import { executeCode, languageMap } from "@/lib/judge0";
 import { Problem } from "@prisma/client";
 import { CodeWrapperService } from "@/lib/codeWrapper";
+import { useParams } from 'next/navigation';
 
 type PlaygroundProps = {
   ProblemId: string;
   problem: Problem;
   setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
-  setSolved: React.Dispatch<React.SetStateAction<boolean>>;
+  setProblemScores: (problemId: string, score: number) => void;
 };
 
 interface TestCase {
@@ -27,16 +28,28 @@ interface TestCase {
   updatedAt: string;
 }
 
-const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, setSolved }) => {
+const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, setProblemScores }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConsole, setShowConsole] = useState(false);
   const [output, setOutput] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [fontSize] = useLocalStorage("lcc-fontSize", "16px");
+  const [submissionResult, setSubmissionResult] = useState<{
+    status: string;
+    score: number;
+    totalScore: number;
+    testCaseResults: Array<{
+      status: string;
+      stdout: string;
+      stderr: string;
+      expected: string;
+    }>;
+  } | null>(null);
   const [code, setCode] = useState<string>(() => {
     try {
       const templates = typeof problem.codeTemplate === 'string' 
@@ -50,6 +63,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   });
   const [testCaseOutputs, setTestCaseOutputs] = useState<Record<string, string[]>>({});
   const [testCaseResults, setTestCaseResults] = useState<Record<string, boolean[]>>({});
+  const params = useParams();
 
   useEffect(() => {
     const storedCode = localStorage.getItem(`code-${ProblemId}-${selectedLanguage}`);
@@ -119,7 +133,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   };
 
   // Sửa lại hàm handleSubmit
-  const handleSubmit = async () => {
+  const handleRun = async () => {
     if (!editorRef.current) {
       setOutput("Editor not initialized");
       return;
@@ -166,7 +180,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
         })
       );
 
-      // Cập nhật results và outputs cho problem hiện tại
+      // Chỉ cập nhật kết quả test case, không cập nhật score
       const results = executionResults.map(result => result.passed);
       const outputs = executionResults.map(result => result.output);
   
@@ -183,25 +197,77 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       // Hiển thị output cho test case đang active
       setOutput(outputs[activeTestCaseId] || "No output");
   
-      if (results.every(r => r)) {
-        setSuccess(true);
-        setSolved(true);
-      } else {
-        setSuccess(false);
-      }
     } catch (error) {
       console.error("Execution error:", error);
       setOutput(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-      setSuccess(false);
     } finally {
       setIsRunning(false);
     }
   };
+
+  const handleSubmit = async () => {
+    if (!editorRef.current) {
+      setOutput("Editor not initialized");
+      return;
+    }
+
+    // Add confirmation dialog
+    if (!window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setOutput("Submitting...");
+
+    try {
+      const userCode = editorRef.current.getValue();
+      const languageId = languageMap[selectedLanguage as keyof typeof languageMap];
+
+      const contestId = params.id as string;
+
+      if (!contestId) {
+        throw new Error('Contest ID not found');
+      }
+
+      const response = await fetch(`/api/contests/${contestId}/submissions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problemId: ProblemId,
+          code: userCode,
+          language: selectedLanguage,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit code');
+      }
+
+      const data = await response.json();
+      setSubmissionResult(data.results);
+
+      // Luôn cập nhật điểm số dựa trên kết quả thực tế
+      setSuccess(data.results.status === 'Accepted');
+      setProblemScores(ProblemId, data.results.score); // Cập nhật điểm thực tế
+
+      setOutput(`Submission Status: ${data.results.status}\nScore: ${data.results.score}\nTotal Score: ${data.results.totalScore}`);
+    } catch (error) {
+      console.error("Submission error:", error);
+      setOutput(`Error: ${error instanceof Error ? error.message : "Failed to submit code"}`);
+      setSuccess(false);
+      setProblemScores(ProblemId, 0); // Reset điểm về 0 khi có lỗi
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-white">Loading test cases...</div>;
   }
   const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
-
   return (
     <>
       <PreferenceNav setLanguage={setSelectedLanguage} />
@@ -225,8 +291,27 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
               <div className="font-semibold my-4 text-white">
                 <p className="text-sm font-medium mt-4">Output:</p>
                 <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
-                  {isRunning ? "Running..." : (output || "No output yet")}
+                  {isRunning ? "Running..." : isSubmitting ? "Submitting..." : (output || "No output yet")}
                 </div>
+                {submissionResult && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium">Submission Results:</p>
+                    <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                      <p>Status: {submissionResult.status}</p>
+                      <p>Score: {submissionResult.score}</p>
+                      <p>Total Score: {submissionResult.totalScore}</p>
+                      <div className="mt-2">
+                        <p className="font-medium">Test Case Results:</p>
+                        {submissionResult.testCaseResults.map((result, index) => (
+                          <div key={index} className="mt-1">
+                            <p>Case {index + 1}: {result.status}</p>
+                            {result.stderr && <p className="text-red-500">Error: {result.stderr}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -244,6 +329,8 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
                           className={`px-4 py-1 rounded-lg cursor-pointer border ${
                             testCaseResults[ProblemId]?.[index]
                               ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500"
+                              : testCaseResults[ProblemId]?.[index] === false
+                              ? "border-red-500 bg-red-500 bg-opacity-20 text-red-500"
                               : activeTestCaseId === index
                               ? "border-white text-white"
                               : "border-white text-gray-500"
@@ -275,6 +362,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
           </div>
         </Split>
         <EditorFooter
+          handleRun={handleRun}
           handleSubmit={handleSubmit}
           setShowConsole={setShowConsole}
           showConsole={showConsole}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import moment from "moment";
 import Workspace from "@/components/workspace/Workspace";
@@ -8,7 +8,6 @@ import { Contest } from "@prisma/client";
 import { Problem } from "@prisma/client";
 import { ChevronLeft, ChevronRight, Home } from "lucide-react";
 
-// Define the ContestWithProblems type
 type ContestWithProblems = Contest & {
   problems: { problem: Problem }[];
 };
@@ -21,7 +20,7 @@ export default function ContestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
-  const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
+  const [problemScores, setProblemScores] = useState<Record<string, number>>({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Fetch contest data
@@ -49,9 +48,7 @@ export default function ContestDetailPage() {
 
     if (id) fetchContest();
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [id]);
 
   // Calculate time left
@@ -84,6 +81,31 @@ export default function ContestDetailPage() {
     setSelectedProblemId(problemId);
   };
 
+  // Stabilize handleUpdateScore with useCallback and prevent unnecessary updates Establishing stable reference to prevent infinite loop
+  const handleUpdateScore = useCallback((problemId: string, score: number) => {
+    setProblemScores((prev) => {
+      // Only update if the score has actually changed
+      if (prev[problemId] === score) return prev;
+      return { ...prev, [problemId]: score };
+    });
+  }, []); // Empty dependency array since it doesn't depend on any external values
+
+  // Sửa hàm tính tổng điểm
+  const calculateTotalScore = () => {
+    const currentTotal = Object.values(problemScores).reduce((sum, score) => sum + score, 0);
+    const maxPossibleScore = contest?.problems.length ? contest.problems.length * 100 : 0;
+    return `${currentTotal}/${maxPossibleScore}`;
+  };
+
+  // Thêm hàm xử lý kết thúc bài thi
+  const handleEnd = () => {
+    // TODO: Implement end contest logic
+    if (window.confirm('Bạn có chắc chắn muốn kết thúc bài thi? Hành động này không thể hoàn tác.')) {
+      // Add your end contest logic here
+      router.push('/'); // Redirect to home page or results page
+    }
+  };
+
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
   if (!contest) return <div className="text-center py-10">No contest found</div>;
@@ -102,7 +124,6 @@ export default function ContestDetailPage() {
       <div className={`bg-white shadow-lg p-6 transition-all duration-300 ${isSidebarOpen ? "w-1/4" : "w-16"}`}>
         {isSidebarOpen && (
           <>
-            {/* Home Button */}
             <button
               className="mb-4 flex items-center space-x-2 text-blue-600 hover:underline"
               onClick={() => router.push("/")}
@@ -120,12 +141,31 @@ export default function ContestDetailPage() {
             <h2 className="text-xl font-semibold my-3">Bài thi</h2>
             <ul className="space-y-2">
               {contest.problems.map((problem, index) => {
-                const isSolved = solvedProblems.has(problem.problem.id);
+                const score = problemScores[problem.problem.id];
                 return (
-                  <li key={problem.problem.id} className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-all ${selectedProblemId === problem.problem.id ? "bg-blue-600 text-white" : "bg-white text-blue-600 hover:bg-gray-200"}`}
-                      onClick={() => handleProblemSelect(problem.problem.id)}>
+                  <li
+                    key={problem.problem.id}
+                    className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-all ${
+                      selectedProblemId === problem.problem.id
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-blue-600 hover:bg-gray-200"
+                    }`}
+                    onClick={() => handleProblemSelect(problem.problem.id)}
+                  >
                     <span className="flex-1">{`${index + 1}. ${problem.problem.title}`}</span>
-                    {isSolved && <span className="text-green-500">✔</span>}
+                    {score !== undefined && (
+                      <span
+                        className={`font-semibold ${
+                          selectedProblemId === problem.problem.id 
+                            ? "text-white" 
+                            : score === 0 
+                              ? "text-red-600" 
+                              : "text-green-600"
+                        }`}
+                      >
+                        {score}/100
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -135,18 +175,39 @@ export default function ContestDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? "w-3/4" : "w-full"}`}>
-        {selectedProblemId ? (
-          <Workspace key={selectedProblemId} id={selectedProblemId} setSolvedProblems={setSolvedProblems} />
-        ) : (
-          <div className="p-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <p className="text-gray-500">
-                {contest.problems.length > 0 ? "Chọn một bài thi để bắt đầu" : "Không có bài thi nào để hiển thị"}
-              </p>
-            </div>
+      <div className={`h-screen transition-all duration-300 ${isSidebarOpen ? "w-3/4" : "w-full"} flex flex-col`}>
+        {/* Score Summary and End Button */}
+        <div className="bg-white shadow-md p-4 h-14 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <span className="text-lg font-semibold">Tổng điểm:</span>
+            <span className="text-2xl font-bold text-blue-600">{calculateTotalScore()}</span>
           </div>
-        )}
+          <button
+            onClick={handleEnd}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
+          >
+            Kết thúc bài thi
+          </button>
+        </div>
+
+        {/* Workspace */}
+        <div className="flex-1">
+          {selectedProblemId ? (
+            <Workspace
+              key={selectedProblemId}
+              id={selectedProblemId}
+              setProblemScores={handleUpdateScore}
+            />
+          ) : (
+            <div className="p-8">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <p className="text-gray-500">
+                  {contest.problems.length > 0 ? "Chọn một bài thi để bắt đầu" : "Không có bài thi nào để hiển thị"}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

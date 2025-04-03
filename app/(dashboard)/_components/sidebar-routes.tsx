@@ -38,6 +38,11 @@ const guestRoutes = [
 const teacherRoutes = [
   {
     icon: BarChart,
+    label: "Cuộc thi",
+    href: "/teacher/contests",
+  },
+  {
+    icon: BarChart,
     label: "Người dùng",
     href: "/teacher/user",
   },

@@ -215,30 +215,31 @@ model ContestProblem {
 }
 
 model ContestParticipant {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  contestId String  @db.ObjectId
-  userId    String  @db.ObjectId
-  score     Float   @default(0)
-  rank      Int?
-  contest   Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  contestId   String    @db.ObjectId
+  clerkUserId String    // Đổi từ userId thành clerkUserId
+  score       Float     @default(0)
+  rank        Int?
+  finishedAt  DateTime?
+  contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade) // Thay đổi reference sang clerkUserId
 
-  @@unique([contestId, userId]) // Đảm bảo mỗi người chỉ tham gia 1 lần
+  @@unique([contestId, clerkUserId]) // Cập nhật unique constraint
 }
 
 model Submission {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
+  clerkUserId String   // Đổi từ userId thành clerkUserId
   contestId   String   @db.ObjectId
   problemId   String   @db.ObjectId
   code        String
   language    String
-  status      String // (Accepted, Wrong Answer, Time Limit Exceeded, etc.)
+  status      String
   score       Float?
   submittedAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade) // Thay đổi reference sang clerkUserId
   contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
   problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, contestId, problemId]) // Mỗi người có thể nộp bài nhiều lần nhưng chỉ lưu điểm cao nhất
+  @@unique([clerkUserId, contestId, problemId]) // Cập nhật unique constraint
 }
