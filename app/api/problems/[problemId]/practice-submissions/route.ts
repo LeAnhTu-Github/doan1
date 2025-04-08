@@ -128,8 +128,19 @@ export async function POST(
       where: { clerkUserId: userId },
     });
 
-    const totalScore = allSubmissions.reduce((sum, sub) => sum + (sub.score || 0), 0);
-    const solvedCount = allSubmissions.filter(sub => sub.status === 'Accepted').length;
+    // Tính tổng điểm từ các submission của các bài khác
+    const otherSubmissionsScore = allSubmissions
+      .filter(sub => sub.problemId !== problemId)
+      .reduce((sum, sub) => sum + (sub.score || 0), 0);
+
+    // Tổng điểm mới = điểm các bài khác + điểm bài hiện tại
+    const totalScore = otherSubmissionsScore + score;
+
+    // Tính lại số bài đã giải
+    const solvedCount = allSubmissions
+      .filter(sub => sub.problemId !== problemId) // Loại bỏ bài hiện tại
+      .filter(sub => sub.status === 'Accepted')
+      .length + (status === 'Accepted' ? 1 : 0); // Cộng thêm 1 nếu bài hiện tại Accepted
 
     // Chỉ cập nhật nếu điểm mới cao hơn hoặc chưa có submission cũ
     const shouldUpdate = !existingSubmission || score > (existingSubmission.score || 0);

@@ -11,12 +11,15 @@ import { getCourses } from "@/actions/get-courses";
 import Footer from "@/components/Footer";
 import ProblemsPage from "@/components/problem/page";
 import ContestPage from "@/components/contests/Contest";
+import Leaderboard from "@/components/leaderboard/Leaderboard";
+
 interface SearchPageProps {
   searchParams: {
     title: string;
     categoryId: string;
   };
 }
+
 export default async function Dashboard({ searchParams }: SearchPageProps) {
   const { userId } = await auth();
   if (!userId) {
@@ -61,26 +64,35 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
       <Section />
       <ContestPage />
       <New events={events} userId={userId} regis={regisEvents} />
-      <>
-        <div className="w-full bg-white  p-7 rounded-3xl flex flex-col gap-4 mt-4">
-          <div className="flex gap-4 items-center">
-            <div className="w-5 h-9 rounded-md bg-[#4d8aed]"></div>
-            <p className="text-[#06080F] text-2xl font-semibold">
-              Các khoá học
-            </p>
-          </div>
-          <div className=" pt-6 md:hidden md:mb-0 block ">
-            <SearchInput />
-          </div>
-          <div className="py-6 space-y-4">
-            <Categories items={categories} />
-            <CoursesList items={courses} user={user} regis={regis} />
-          </div>
+      
+      {/* Leaderboard Section */}
+      <div className="w-full bg-white p-7 rounded-3xl">
+        <div className="flex gap-4 items-center mb-6">
+          <div className="w-5 h-9 rounded-md bg-[#4d8aed]"></div>
+          <p className="text-[#06080F] text-2xl font-semibold">
+            Top Participants
+          </p>
         </div>
-      </>
-      <ProblemsPage />
+        <Leaderboard />
+      </div>
 
-      {/* <CoursesList items={[...coursesInProgress, ...completedCourses]} /> */}
+      <div className="w-full bg-white p-7 rounded-3xl flex flex-col gap-4 mt-4">
+        <div className="flex gap-4 items-center">
+          <div className="w-5 h-9 rounded-md bg-[#4d8aed]"></div>
+          <p className="text-[#06080F] text-2xl font-semibold">
+            Các khoá học
+          </p>
+        </div>
+        <div className="pt-6 md:hidden md:mb-0 block">
+          <SearchInput />
+        </div>
+        <div className="py-6 space-y-4">
+          <Categories items={categories} />
+          <CoursesList items={courses} user={user} regis={regis} />
+        </div>
+      </div>
+      
+      <ProblemsPage />
       <Footer />
     </div>
   );

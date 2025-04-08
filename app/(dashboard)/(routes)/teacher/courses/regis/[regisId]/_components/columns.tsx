@@ -2,7 +2,7 @@
 
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import useExcelDownloader from "react-xls";
+
 import {
   ArrowUpDown,
   MoreHorizontal,
