@@ -53,21 +53,33 @@ export default function ContestDetailPage() {
 
   // Calculate time left
   useEffect(() => {
-    if (!contest?.endTime) return;
+    if (!contest?.startTime || !contest?.endTime) return;
 
     const updateTimeLeft = () => {
+      const startTime = moment(contest.startTime);
       const endTime = moment(contest.endTime);
       const now = moment();
 
-      if (endTime.isAfter(now)) {
-        const duration = moment.duration(endTime.diff(now));
+      // Calculate total duration of the contest
+      const totalDuration = moment.duration(endTime.diff(startTime));
+      
+      // Calculate time elapsed since contest start
+      const timeElapsed = moment.duration(now.diff(startTime));
+      
+      // Calculate remaining time
+      const remainingTime = moment.duration(totalDuration.asMilliseconds() - timeElapsed.asMilliseconds());
+
+      if (remainingTime.asMilliseconds() > 0) {
+        const hours = Math.floor(remainingTime.asHours());
+        const minutes = remainingTime.minutes();
+        const seconds = remainingTime.seconds();
+        
         setTimeLeft(
-          `${String(Math.floor(duration.asHours())).padStart(2, "0")}:${String(
-            duration.minutes()
-          ).padStart(2, "0")}:${String(duration.seconds()).padStart(2, "0")}`
+          `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
         );
       } else {
-        setTimeLeft("Contest has ended");
+        setTimeLeft("00:00:00");
+        handleEnd();
       }
     };
 
@@ -194,6 +206,7 @@ export default function ContestDetailPage() {
         <div className="flex-1">
           {selectedProblemId ? (
             <Workspace
+              mode="contest"
               key={selectedProblemId}
               id={selectedProblemId}
               setProblemScores={handleUpdateScore}

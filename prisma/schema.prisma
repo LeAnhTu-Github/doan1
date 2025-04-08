@@ -103,6 +103,8 @@ model User {
   role                String?
   contestParticipants ContestParticipant[]
   submissions         Submission[]
+  practiceSubmissions PracticeSubmission[]
+  ranking             UserRanking?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 }
@@ -139,39 +141,27 @@ model userRegister {
   updatedAt  DateTime @updatedAt
 }
 
-model Score {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  testId    String
-  masv      String?
-  name      String?
-  class     String?
-  score     Float?
-  rank      Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Problem {
-  id               String           @id @default(auto()) @map("_id") @db.ObjectId
-  title            String?
-  difficulty       String?
-  category         String?
-  language         Int?
-  time             DateTime?
-  order            Int?
-  testCases        TestCase[]
-  problemStatement String
-  examples         Json
-  constraints      String
-  status           Boolean?
-  metadata        Json             // Lưu thông tin về input/output format
-  codeTemplate    Json             // Lưu template code cho các ngôn ngữ khác nhau
-  functionName    String          // Tên hàm cần implement
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  contestProblems  ContestProblem[]
-  submissions      Submission[]
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
+  title              String?
+  difficulty         String?
+  category           String?
+  language           Int?
+  time               DateTime?
+  order              Int?
+  testCases          TestCase[]
+  problemStatement   String
+  examples           Json
+  constraints        String
+  status             Boolean?
+  metadata           Json             // Lưu thông tin về input/output format
+  codeTemplate       Json             // Lưu template code cho các ngôn ngữ khác nhau
+  functionName       String          // Tên hàm cần implement
+  contestProblems    ContestProblem[]
+  submissions        Submission[]
+  practiceSubmissions PracticeSubmission[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 }
 
 model TestCase {
@@ -242,4 +232,31 @@ model Submission {
   problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@unique([clerkUserId, contestId, problemId]) // Cập nhật unique constraint
+}
+
+// Thêm model mới để theo dõi submissions cho practice problems
+model PracticeSubmission {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkUserId String   
+  problemId   String   @db.ObjectId
+  code        String
+  language    String
+  status      String
+  score       Float?
+  submittedAt DateTime @default(now())
+  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade)
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([clerkUserId, problemId]) // Thêm unique constraint này
+}
+
+// Thêm model để theo dõi thứ hạng tổng thể của người dùng
+model UserRanking {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkUserId String   @unique // Mỗi user chỉ có một ranking
+  totalScore  Float    @default(0)
+  solvedCount Int      @default(0)
+  rank        Int?
+  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade)
+  updatedAt   DateTime @updatedAt
 }

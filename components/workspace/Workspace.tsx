@@ -10,9 +10,10 @@ import Playground from "./Playground/Playground";
 type WorkspaceProps = {
   id: string;
   setProblemScores: (problemId: string, score: number) => void;
+  mode: 'contest' | 'practice';
 };
 
-const Workspace = ({ id, setProblemScores }: WorkspaceProps) => {
+const Workspace = ({ id, setProblemScores, mode }: WorkspaceProps) => {
   const { width, height } = useWindowSize();
   const [success, setSuccess] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -83,6 +84,7 @@ const Workspace = ({ id, setProblemScores }: WorkspaceProps) => {
       <div className="bg-dark-fill-2">
         {problem && (
           <Playground
+            mode={mode}
             key={id} // Thêm key để force re-render khi id thay đổi
             ProblemId={id}
             problem={problem}

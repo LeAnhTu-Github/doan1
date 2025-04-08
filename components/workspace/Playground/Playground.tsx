@@ -10,12 +10,14 @@ import { executeCode, languageMap } from "@/lib/judge0";
 import { Problem } from "@prisma/client";
 import { CodeWrapperService } from "@/lib/codeWrapper";
 import { useParams } from 'next/navigation';
+import SuccessModal from '@/components/modals/SuccessModal';
 
 type PlaygroundProps = {
   ProblemId: string;
   problem: Problem;
   setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
   setProblemScores: (problemId: string, score: number) => void;
+  mode: 'contest' | 'practice';
 };
 
 interface TestCase {
@@ -28,7 +30,7 @@ interface TestCase {
   updatedAt: string;
 }
 
-const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, setProblemScores }) => {
+const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, setProblemScores, mode }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState(0);
@@ -64,6 +66,8 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   const [testCaseOutputs, setTestCaseOutputs] = useState<Record<string, string[]>>({});
   const [testCaseResults, setTestCaseResults] = useState<Record<string, boolean[]>>({});
   const params = useParams();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submissionScore, setSubmissionScore] = useState({ score: 0, totalScore: 0, solvedCount: 0 });
 
   useEffect(() => {
     const storedCode = localStorage.getItem(`code-${ProblemId}-${selectedLanguage}`);
@@ -145,58 +149,67 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
     const userCode = editorRef.current.getValue();
     const languageId = languageMap[selectedLanguage as keyof typeof languageMap];
   
-    if (!testCases.length || !testCases[activeTestCaseId]) {
-      setOutput("No valid test case available");
-      setIsRunning(false);
-      return;
-    }
-
     try {
-      const metadata = typeof problem.metadata === 'string' 
-        ? JSON.parse(problem.metadata) 
-        : problem.metadata;
+      if (mode === 'contest') {
+        // Contest mode: chạy trực tiếp code của người dùng
+        const result = await executeCode({
+          source_code: userCode, // Sử dụng code gốc không qua wrapper
+          language_id: languageId,
+          stdin: "", // Không cần stdin vì input đã nằm trong code
+        });
 
-      const wrappedCode = CodeWrapperService.generateWrapper(
-        userCode,
-        selectedLanguage,
-        metadata,
-        problem.functionName
-      );
+        setOutput(result.trim());
+      } else {
+        // Practice mode: giữ nguyên logic cũ
+        if (!testCases.length || !testCases[activeTestCaseId]) {
+          setOutput("No valid test case available");
+          setIsRunning(false);
+          return;
+        }
 
-      const executionResults = await Promise.all(
-        testCases.map(async (testCase) => {
-          const inputJson = JSON.stringify(testCase.input);
-          const result = await executeCode({
-            source_code: wrappedCode,
-            language_id: languageId,
-            stdin: inputJson,
-          });
+        const metadata = typeof problem.metadata === 'string'
+          ? JSON.parse(problem.metadata)
+          : problem.metadata;
 
-          const parsedOutput = result.trim();
-          return {
-            output: parsedOutput,
-            passed: parsedOutput === testCase.expected.trim()
-          };
-        })
-      );
+        const wrappedCode = CodeWrapperService.generateWrapper(
+          userCode,
+          selectedLanguage,
+          metadata,
+          problem.functionName
+        );
 
-      // Chỉ cập nhật kết quả test case, không cập nhật score
-      const results = executionResults.map(result => result.passed);
-      const outputs = executionResults.map(result => result.output);
+        const executionResults = await Promise.all(
+          testCases.map(async (testCase) => {
+            const inputJson = JSON.stringify(testCase.input);
+            const result = await executeCode({
+              source_code: wrappedCode,
+              language_id: languageId,
+              stdin: inputJson,
+            });
+
+            const parsedOutput = result.trim();
+            return {
+              output: parsedOutput,
+              passed: parsedOutput === testCase.expected.trim()
+            };
+          })
+        );
+
+        const results = executionResults.map(result => result.passed);
+        const outputs = executionResults.map(result => result.output);
   
-      setTestCaseResults(prev => ({
-        ...prev,
-        [ProblemId]: results
-      }));
-      
-      setTestCaseOutputs(prev => ({
-        ...prev,
-        [ProblemId]: outputs
-      }));
+        setTestCaseResults(prev => ({
+          ...prev,
+          [ProblemId]: results
+        }));
+        
+        setTestCaseOutputs(prev => ({
+          ...prev,
+          [ProblemId]: outputs
+        }));
   
-      // Hiển thị output cho test case đang active
-      setOutput(outputs[activeTestCaseId] || "No output");
-  
+        setOutput(outputs[activeTestCaseId] || "No output");
+      }
     } catch (error) {
       console.error("Execution error:", error);
       setOutput(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -211,7 +224,6 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       return;
     }
 
-    // Add confirmation dialog
     if (!window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
       return;
     }
@@ -221,51 +233,84 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
 
     try {
       const userCode = editorRef.current.getValue();
-      const languageId = languageMap[selectedLanguage as keyof typeof languageMap];
 
-      const contestId = params.id as string;
+      if (mode === 'practice') {
+        const response = await fetch(`/api/problems/${ProblemId}/practice-submissions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: userCode,
+            language: selectedLanguage,
+          }),
+        });
 
-      if (!contestId) {
-        throw new Error('Contest ID not found');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to submit code');
+        }
+
+        const data = await response.json();
+        setSubmissionResult(data.results);
+        setSuccess(data.results.status === 'Accepted');
+        setProblemScores(ProblemId, data.results.score);
+
+        // Cập nhật state cho modal
+        setSubmissionScore({
+          score: data.results.score,
+          totalScore: 100, // hoặc lấy từ problem.totalScore nếu có
+          solvedCount: data.results.solvedCount
+        });
+        setShowSuccessModal(true);
+
+      } else {
+        // Contest mode logic...
+        const contestId = params.id as string;
+        // ... existing contest submission code ...
+
+        const response = await fetch(`/api/contests/${contestId}/submissions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            problemId: ProblemId,
+            code: userCode,
+            language: selectedLanguage,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to submit code');
+        }
+
+        const data = await response.json();
+        setSubmissionResult(data.results);
+        setSuccess(data.results.status === 'Accepted');
+        setProblemScores(ProblemId, data.results.score);
+
+        // Cập nhật state cho modal trong contest mode
+        setSubmissionScore({
+          score: data.results.score,
+          totalScore: 10,
+          solvedCount: 0
+        });
+        setShowSuccessModal(true);
       }
-
-      const response = await fetch(`/api/contests/${contestId}/submissions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          problemId: ProblemId,
-          code: userCode,
-          language: selectedLanguage,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit code');
-      }
-
-      const data = await response.json();
-      setSubmissionResult(data.results);
-
-      // Luôn cập nhật điểm số dựa trên kết quả thực tế
-      setSuccess(data.results.status === 'Accepted');
-      setProblemScores(ProblemId, data.results.score); // Cập nhật điểm thực tế
-
-      setOutput(`Submission Status: ${data.results.status}\nScore: ${data.results.score}\nTotal Score: ${data.results.totalScore}`);
     } catch (error) {
       console.error("Submission error:", error);
       setOutput(`Error: ${error instanceof Error ? error.message : "Failed to submit code"}`);
       setSuccess(false);
-      setProblemScores(ProblemId, 0); // Reset điểm về 0 khi có lỗi
+      setProblemScores(ProblemId, 0);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (isLoading) {
-    return <div className="text-white">Loading test cases...</div>;
+    return <div className="text-white">Đang tải test cases...</div>;
   }
   const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
   return (
@@ -282,82 +327,102 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
               onChange={handleEditorChange}
               options={{
                 renderValidationDecorations: "off",
+                suggestOnTriggerCharacters: true,
                 fontSize: parseInt(fontSize.replace("px", "")),
               }}
             />
           </div>
           <div className="w-full px-5 overflow-auto">
-            {showConsole ? (
+            {mode === 'contest' ? (
               <div className="font-semibold my-4 text-white">
-                <p className="text-sm font-medium mt-4">Output:</p>
+                <p className="text-sm font-medium mt-4">Đầu ra:</p>
                 <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
-                  {isRunning ? "Running..." : isSubmitting ? "Submitting..." : (output || "No output yet")}
+                  {isRunning ? "Đang chạy..." : isSubmitting ? "Đang nộp..." : (output || "Chưa có đầu ra")}
                 </div>
                 {submissionResult && (
                   <div className="mt-4">
-                    <p className="text-sm font-medium">Submission Results:</p>
+                    <p className="text-sm font-medium">Kết quả bài nộp:</p>
                     <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                      <p>Status: {submissionResult.status}</p>
-                      <p>Score: {submissionResult.score}</p>
-                      <p>Total Score: {submissionResult.totalScore}</p>
-                      <div className="mt-2">
-                        <p className="font-medium">Test Case Results:</p>
-                        {submissionResult.testCaseResults.map((result, index) => (
-                          <div key={index} className="mt-1">
-                            <p>Case {index + 1}: {result.status}</p>
-                            {result.stderr && <p className="text-red-500">Error: {result.stderr}</p>}
-                          </div>
-                        ))}
-                      </div>
+                      <p>Trạng thái: {submissionResult.status}</p>
+                      <p>Điểm số: {submissionResult.score}</p>
+                      <p>Tổng điểm: {submissionResult.totalScore}</p>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <>
-                <div className="flex h-10 items-center space-x-6">
-                  <div className="text-sm font-medium text-white">Testcases</div>
-                </div>
-                <div className="flex">
-                    {visibleTestCases.map((testCase, index) => (
-                      <div
-                        key={testCase.id}
-                        className="mr-2 mt-2"
-                        onClick={() => setActiveTestCaseId(index)}
-                      >
-                        <div
-                          className={`px-4 py-1 rounded-lg cursor-pointer border ${
-                            testCaseResults[ProblemId]?.[index]
-                              ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500"
-                              : testCaseResults[ProblemId]?.[index] === false
-                              ? "border-red-500 bg-red-500 bg-opacity-20 text-red-500"
-                              : activeTestCaseId === index
-                              ? "border-white text-white"
-                              : "border-white text-gray-500"
-                          }`}
-                        >
-                        Case {index + 1}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                  {visibleTestCases.length > 0 && visibleTestCases[activeTestCaseId] && (
-                    <div className="font-semibold my-4 text-white">
-                      <p className="text-sm font-medium mt-4">Input:</p>
+              showConsole ? (
+                <div className="font-semibold my-4 text-white">
+                  <p className="text-sm font-medium mt-4">Đầu ra:</p>
+                  <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
+                    {isRunning ? "Đang chạy..." : isSubmitting ? "Đang nộp..." : (output || "Chưa có đầu ra")}
+                  </div>
+                  {submissionResult && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Kết quả bài nộp:</p>
                       <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                        {JSON.stringify(visibleTestCases[activeTestCaseId].input, null, 2)}
-                      </div>
-                      <p className="text-sm font-medium mt-4">Expected Output:</p>
-                      <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                        {visibleTestCases[activeTestCaseId].expected}
-                      </div>
-                      <p className="text-sm font-medium mt-4">Actual Output:</p>
-                      <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                        {testCaseOutputs[ProblemId]?.[activeTestCaseId] || "Not executed yet"}
+                        <p>Trạng thái bài nộp: {submissionResult.status}</p>
+                        <p>Điểm số: {submissionResult.score}</p>
+                        <p>Tổng điểm: {submissionResult.totalScore}</p>
+                        <div className="mt-2">
+                          <p className="font-medium">Kết quả test case:</p>
+                          {submissionResult.testCaseResults.map((result, index) => (
+                            <div key={index} className="mt-1">
+                              <p>Case {index + 1}: {result.status}</p>
+                              {result.stderr && <p className="text-red-500">Lỗi: {result.stderr}</p>}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
-              </>
+                </div>
+              ) : (
+                <>
+                  <div className="flex h-10 items-center space-x-6">
+                    <div className="text-sm font-medium text-white">Testcases</div>
+                  </div>
+                  <div className="flex">
+                      {visibleTestCases.map((testCase, index) => (
+                        <div
+                          key={testCase.id}
+                          className="mr-2 mt-2"
+                          onClick={() => setActiveTestCaseId(index)}
+                        >
+                          <div
+                            className={`px-4 py-1 rounded-lg cursor-pointer border ${
+                              testCaseResults[ProblemId]?.[index]
+                                ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500"
+                                : testCaseResults[ProblemId]?.[index] === false
+                                ? "border-red-500 bg-red-500 bg-opacity-20 text-red-500"
+                                : activeTestCaseId === index
+                                ? "border-white text-white"
+                                : "border-white text-gray-500"
+                            }`}
+                          >
+                          Case {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                    {visibleTestCases.length > 0 && visibleTestCases[activeTestCaseId] && (
+                      <div className="font-semibold my-4 text-white">
+                        <p className="text-sm font-medium mt-4">Đầu vào:</p>
+                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                          {JSON.stringify(visibleTestCases[activeTestCaseId].input, null, 2)}
+                        </div>
+                        <p className="text-sm font-medium mt-4">Đầu ra dự kiến:</p>
+                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                          {visibleTestCases[activeTestCaseId].expected}
+                        </div>
+                        <p className="text-sm font-medium mt-4">Đầu ra thực tế:</p>
+                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                          {testCaseOutputs[ProblemId]?.[activeTestCaseId] || "Chưa chạy"}
+                        </div>
+                      </div>
+                    )}
+                </>
+              )
             )}
           </div>
         </Split>
@@ -366,8 +431,17 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
           handleSubmit={handleSubmit}
           setShowConsole={setShowConsole}
           showConsole={showConsole}
+          mode={mode}
         />
       </div>
+      
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        score={submissionScore.score}
+        totalScore={submissionScore.totalScore}
+        solvedCount={mode === 'practice' ? submissionScore.solvedCount : undefined}
+      />
     </>
   );
 };

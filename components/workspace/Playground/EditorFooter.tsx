@@ -6,9 +6,10 @@ type EditorFooterProps = {
   handleRun: () => void;
   showConsole: boolean;
   setShowConsole: React.Dispatch<React.SetStateAction<boolean>>;
+  mode: 'contest' | 'practice';
 };
 
-const EditorFooter: React.FC<EditorFooterProps> = ({ handleSubmit, handleRun, showConsole,setShowConsole }) => {
+const EditorFooter: React.FC<EditorFooterProps> = ({ handleSubmit, handleRun, showConsole,setShowConsole, mode }) => {
   
   return (
     <div className="flex bg-dark-layer-1 absolute bottom-0 z-10 w-full">

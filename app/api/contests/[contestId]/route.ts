@@ -2,10 +2,10 @@ import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // Lấy chi tiết một cuộc thi
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { contestId: string } }) {
   try {
     const contest = await db.contest.findUnique({
-      where: { id: params.id },
+      where: { id: params.contestId },
       include: {
         problems: {
           include: {
@@ -35,13 +35,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // Cập nhật một cuộc thi
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: { contestId: string } }) {
   try {
     const body = await request.json();
     const { title, description, startTime, endTime, problemIds } = body;
 
     const contest = await db.contest.update({
-      where: { id: params.id },
+      where: { id: params.contestId },
       data: {
         title,
         description,
@@ -75,10 +75,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 // Xóa một cuộc thi
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: { contestId: string } }) {
   try {
     await db.contest.delete({
-      where: { id: params.id },
+      where: { id: params.contestId },
     });
 
     return NextResponse.json({ message: 'Contest deleted successfully' }, { status: 200 });

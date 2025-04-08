@@ -2,7 +2,7 @@
 
 import { Contest } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Pencil, BarChart } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, BarChart, Code } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,7 @@ export const columns: ColumnDef<ContestWithCount>[] = [
                 Dashboard
               </DropdownMenuItem>
             </Link>
-            <Link href={`/teacher/contests/${id}`}>
+            <Link href={`/teacher/contests/${id}/edit`}>
               <DropdownMenuItem>
                 <Pencil className="h-4 w-4 mr-2" />
                 Chỉnh sửa
@@ -181,9 +181,9 @@ export const columns: ColumnDef<ContestWithCount>[] = [
                 Danh sách thí sinh
               </DropdownMenuItem>
             </Link>
-            <Link href={`/teacher/contests/${id}/submissions`}>
+            <Link href={`/teacher/contests/${id}/submissions/coding`}>
               <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
+                <Code className="h-4 w-4 mr-2" />
                 Bài nộp
               </DropdownMenuItem>
             </Link>

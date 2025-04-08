@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { auth } from "@clerk/nextjs";
-import { submitCode, getSubmissionResult, languageMap } from '@/lib/judge0';
-import { CodeWrapperService } from '@/lib/codeWrapper'; // Thêm import nếu dùng wrapper
+import { languageMap } from '@/lib/judge0';
+import { CodeWrapperService } from '@/lib/codeWrapper';
+import { db } from '@/lib/db'; // Import db từ lib/db
 
 const JUDGE0_HOST = "localhost:2358";
 const JUDGE0_PROTOCOL = "http";
@@ -13,7 +13,7 @@ const apiHeaders = {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { problemId: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -21,9 +21,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { problemId } = params;
     const body = await request.json();
-    const { problemId, code, language } = body;
+    const { code, language } = body;
 
     if (!problemId || !code || !language) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -34,41 +34,21 @@ export async function POST(
       return NextResponse.json({ error: 'Unsupported programming language' }, { status: 400 });
     }
 
-    const contest = await db.contest.findUnique({ where: { id: id } });
-    if (!contest) {
-      return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
-    }
-    if (contest.status !== 'upcoming') {
-      return NextResponse.json({ error: 'Contest is not active' }, { status: 400 });
-    }
-
-    const participant = await db.contestParticipant.findFirst({
-      where: {
-        AND: [
-          { contestId: id },
-          { clerkUserId: userId }
-        ]
-      }
-    });
-    if (participant?.finishedAt) {
-      return NextResponse.json(
-        { error: 'You have already finished this contest and cannot submit anymore' },
-        { status: 400 }
-      );
-    }
-
+    // Fetch problem and test cases
     const problem = await db.problem.findUnique({
       where: { id: problemId },
       include: { testCases: true },
     });
+
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
     }
-    if (problem.testCases.length === 0) {
-      return NextResponse.json({ error: 'No test cases available for this problem' }, { status: 400 });
+
+    if (!problem.testCases || problem.testCases.length === 0) {
+      return NextResponse.json({ error: 'No test cases available' }, { status: 400 });
     }
 
-    // (Tùy chọn) Bọc code bằng CodeWrapperService nếu cần đồng bộ với handleRun
+    // Wrap code if metadata exists
     let sourceCode = code;
     const metadata = typeof problem.metadata === 'string' 
       ? JSON.parse(problem.metadata) 
@@ -82,7 +62,7 @@ export async function POST(
       );
     }
 
-    // Xử lý submission với so sánh stdout và expected
+    // Execute code against all test cases with improved validation
     const results = await Promise.all(
       problem.testCases.map(async (testCase) => {
         try {
@@ -90,7 +70,7 @@ export async function POST(
             method: "POST",
             headers: apiHeaders,
             body: JSON.stringify({
-              source_code: sourceCode, // Dùng sourceCode đã bọc (nếu có)
+              source_code: sourceCode,
               language_id: languageId,
               stdin: JSON.stringify(testCase.input),
             }),
@@ -101,10 +81,9 @@ export async function POST(
           }
 
           const result = await response.json();
-          // Kiểm tra stdout có hợp lệ không (không undefined, null, hoặc rỗng)
+          // Validate stdout and compare with expected output
           const stdout = result.stdout?.trim();
           const isOutputValid = stdout !== undefined && stdout !== null && stdout !== '';
-          // So sánh stdout với expected output, chỉ khi output hợp lệ
           const isCorrect = result.status?.id === 3 && isOutputValid && stdout === testCase.expected?.trim();
           
           return {
@@ -127,66 +106,84 @@ export async function POST(
       })
     );
 
-    // Tính toán trạng thái và điểm số
+    // Calculate status and score
     const allAccepted = results.every((result) => result.status.id === 3);
     const status = allAccepted
       ? 'Accepted'
       : results.find((r) => r.status.id !== 3)?.status.description || 'Error';
     const score = calculateScore(results, problem.testCases.length);
 
-    // Lưu submission vào database
-    const submission = await db.submission.upsert({
+    // Trước khi tạo submission mới, lấy submission cũ để so sánh điểm
+    const existingSubmission = await db.practiceSubmission.findUnique({
       where: {
-        clerkUserId_contestId_problemId: {
+        clerkUserId_problemId: {
           clerkUserId: userId,
-          contestId: id,
-          problemId: problemId
-        }
-      },
-      update: {
-        code,
-        language,
-        status,
-        score,
-        submittedAt: new Date(),
-      },
-      create: {
-        clerkUserId: userId,
-        contestId: id,
-        problemId,
-        code,
-        language,
-        status,
-        score,
-        submittedAt: new Date(),
+          problemId: problemId,
+        },
       },
     });
 
-    // Tính tổng điểm tốt nhất
-    const bestScores = await db.submission.groupBy({
-      by: ['problemId'],
-      where: { clerkUserId: userId, contestId: id },
-      _max: { score: true },
-    });
-    const totalScore = bestScores.reduce(
-      (total, curr) => total + (curr._max.score || 0),
-      0
-    );
-
-    await db.contestParticipant.upsert({
-      where: { contestId_clerkUserId: { contestId: id, clerkUserId: userId } },
-      update: { score: totalScore },
-      create: { contestId: id, clerkUserId: userId, score: totalScore },
+    // Lấy thông tin ranking hiện tại của user
+    const allSubmissions = await db.practiceSubmission.findMany({
+      where: { clerkUserId: userId },
     });
 
-    // Trả về kết quả
+    const totalScore = allSubmissions.reduce((sum, sub) => sum + (sub.score || 0), 0);
+    const solvedCount = allSubmissions.filter(sub => sub.status === 'Accepted').length;
+
+    // Chỉ cập nhật nếu điểm mới cao hơn hoặc chưa có submission cũ
+    const shouldUpdate = !existingSubmission || score > (existingSubmission.score || 0);
+
+    let submission;
+    if (shouldUpdate) {
+      // Chỉ tạo/cập nhật submission khi điểm cao hơn
+      submission = await db.practiceSubmission.upsert({
+        where: {
+          clerkUserId_problemId: {
+            clerkUserId: userId,
+            problemId: problemId,
+          },
+        },
+        update: {
+          code,
+          language,
+          status,
+          score,
+          submittedAt: new Date(),
+        },
+        create: {
+          clerkUserId: userId,
+          problemId,
+          code,
+          language,
+          status,
+          score,
+        },
+      });
+
+      // Update user ranking chỉ khi có điểm cao hơn
+      await db.userRanking.upsert({
+        where: { clerkUserId: userId },
+        update: {
+          totalScore,
+          solvedCount,
+        },
+        create: {
+          clerkUserId: userId,
+          totalScore,
+          solvedCount,
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      submission,
       results: {
-        status,
-        score,
-        totalScore,
+        status: status, // Luôn hiển thị trạng thái mới
+        score: score, // Luôn hiển thị điểm số mới
+        highestScore: existingSubmission?.score || score, // Hiển thị điểm cao nhất đã đạt được
+        totalScore, // Đã được định nghĩa ở trên
+        solvedCount, // Đã được định nghĩa ở trên
         testCaseResults: results.map((r, i) => ({
           status: r.status?.description,
           stdout: r.stdout,
@@ -195,11 +192,11 @@ export async function POST(
         })),
       },
     });
-  } catch (error: unknown) {
+
+  } catch (error) {
     console.error('Submission error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: errorMessage },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
@@ -209,4 +206,32 @@ function calculateScore(results: any[], totalTestCases: number): number {
   const passedTests = results.filter((r) => r.status.id === 3).length;
   const score = (passedTests / totalTestCases) * 100;
   return Math.round(score); // Làm tròn điểm
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { problemId: string } }
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { problemId } = params;
+    const submission = await db.practiceSubmission.findFirst({
+      where: {
+        clerkUserId: userId,
+        problemId: problemId,
+      },
+    });
+
+    return NextResponse.json(submission);
+  } catch (error) {
+    console.error('Error fetching submission:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch submission' },
+      { status: 500 }
+    );
+  }
 }
