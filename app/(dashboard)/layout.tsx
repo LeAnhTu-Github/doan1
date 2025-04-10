@@ -1,6 +1,5 @@
 import { Navbar } from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
-import { clerkClient, currentUser } from "@clerk/nextjs";
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="h-full">

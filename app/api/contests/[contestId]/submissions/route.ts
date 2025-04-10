@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { submitCode, getSubmissionResult, languageMap } from '@/lib/judge0';
 import { CodeWrapperService } from '@/lib/codeWrapper'; // Thêm import nếu dùng wrapper
 
@@ -16,7 +17,9 @@ export async function POST(
   { params }: { params: { contestId: string } }
 ) {
   try {
-    const { userId } = await auth();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -46,7 +49,7 @@ export async function POST(
       where: {
         AND: [
           { contestId: contestId },
-          { clerkUserId: userId }
+          { userId: userId }
         ]
       }
     });
@@ -86,7 +89,9 @@ export async function POST(
     const results = await Promise.all(
       problem.testCases.map(async (testCase) => {
         try {
-          const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`, {
+          // Use base64 encoding for C++ submissions to avoid character encoding issues
+          const useBase64 = language === 'cpp';
+          const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=true`, {
             method: "POST",
             headers: apiHeaders,
             body: JSON.stringify({
@@ -137,8 +142,8 @@ export async function POST(
     // Lưu submission vào database
     const submission = await db.submission.upsert({
       where: {
-        clerkUserId_contestId_problemId: {
-          clerkUserId: userId,
+        userId_contestId_problemId: {
+          userId: userId,
           contestId: contestId,
           problemId: problemId
         }
@@ -151,7 +156,7 @@ export async function POST(
         submittedAt: new Date(),
       },
       create: {
-        clerkUserId: userId,
+        userId: userId,
         contestId: contestId,
         problemId,
         code,
@@ -165,7 +170,7 @@ export async function POST(
     // Tính tổng điểm tốt nhất
     const bestScores = await db.submission.groupBy({
       by: ['problemId'],
-      where: { clerkUserId: userId, contestId: contestId },
+      where: { userId: userId, contestId: contestId },
       _max: { score: true },
     });
     const totalScore = bestScores.reduce(
@@ -174,9 +179,18 @@ export async function POST(
     );
 
     await db.contestParticipant.upsert({
-      where: { contestId_clerkUserId: { contestId: contestId, clerkUserId: userId } },
+      where: { 
+        contestId_userId: {
+          contestId: contestId,
+          userId: userId
+        }
+      },
       update: { score: totalScore },
-      create: { contestId: contestId, clerkUserId: userId, score: totalScore },
+      create: { 
+        contestId: contestId,
+        userId: userId,
+        score: totalScore
+      },
     });
 
     // Trả về kết quả

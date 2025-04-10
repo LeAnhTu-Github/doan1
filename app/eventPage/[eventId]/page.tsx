@@ -1,7 +1,8 @@
 import React from "react";
 import ClientOnly from "@/components/ClientOnly";
 import EventClient from "./EventClient";
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 interface IParams {
   eventId?: string;
@@ -12,7 +13,8 @@ const page = async ({ params }: { params: IParams }) => {
       createdAt: "desc",
     },
   });
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
   const regis = await db.userRegister.findMany({
     orderBy: {
       createdAt: "desc",

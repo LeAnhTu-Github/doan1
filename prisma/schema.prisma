@@ -7,7 +7,41 @@ generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "darwin", "darwin-arm64"]
 }
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  imageUrl          String?
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
 model Course {
   id             String           @id @default(auto()) @map("_id") @db.ObjectId
   userId         String
@@ -93,14 +127,17 @@ model UserProgress {
 
 model User {
   id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  clerkUserId         String               @unique // ID của Clerk
   masv                String?
   name                String?
   email               String?              @unique
+  emailVerified       DateTime?           // Thêm trường này cho NextAuth
   class               String?
   department          String?
   image               String?
+  password            String?
   role                String?
+  accounts            Account[]           // Thêm relation với Account
+  sessions            Session[]           // Thêm relation với Session
   contestParticipants ContestParticipant[]
   submissions         Submission[]
   practiceSubmissions PracticeSubmission[]
@@ -154,6 +191,7 @@ model Problem {
   examples           Json
   constraints        String
   status             Boolean?
+  mode               Boolean?
   metadata           Json             // Lưu thông tin về input/output format
   codeTemplate       Json             // Lưu template code cho các ngôn ngữ khác nhau
   functionName       String          // Tên hàm cần implement
@@ -207,19 +245,19 @@ model ContestProblem {
 model ContestParticipant {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   contestId   String    @db.ObjectId
-  clerkUserId String    // Đổi từ userId thành clerkUserId
+  userId      String?   @db.ObjectId        // Tạm thời cho phép null
   score       Float     @default(0)
   rank        Int?
   finishedAt  DateTime?
   contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade) // Thay đổi reference sang clerkUserId
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([contestId, clerkUserId]) // Cập nhật unique constraint
+  @@unique([contestId, userId])
 }
 
 model Submission {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkUserId String   // Đổi từ userId thành clerkUserId
+  userId      String?  @db.ObjectId        // Tạm thời cho phép null
   contestId   String   @db.ObjectId
   problemId   String   @db.ObjectId
   code        String
@@ -227,36 +265,38 @@ model Submission {
   status      String
   score       Float?
   submittedAt DateTime @default(now())
-  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade) // Thay đổi reference sang clerkUserId
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
   problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
-  @@unique([clerkUserId, contestId, problemId]) // Cập nhật unique constraint
+  @@unique([userId, contestId, problemId])
 }
 
 // Thêm model mới để theo dõi submissions cho practice problems
 model PracticeSubmission {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkUserId String   
+  userId      String?  @db.ObjectId        // Tạm thời cho phép null
   problemId   String   @db.ObjectId
   code        String
   language    String
   status      String
   score       Float?
   submittedAt DateTime @default(now())
-  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
-  @@unique([clerkUserId, problemId]) // Thêm unique constraint này
+  @@unique([userId, problemId])
 }
 
 // Thêm model để theo dõi thứ hạng tổng thể của người dùng
 model UserRanking {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkUserId String   @unique // Mỗi user chỉ có một ranking
+  userId      String?  @db.ObjectId        // Tạm thời cho phép null
   totalScore  Float    @default(0)
   solvedCount Int      @default(0)
   rank        Int?
-  user        User     @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt   DateTime @updatedAt
+
+  @@unique([userId])
 }

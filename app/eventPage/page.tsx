@@ -2,19 +2,26 @@ import React from "react";
 import ListEvent from "./ListEvent";
 import { db } from "@/lib/db";
 import NewsCard from "@/components/news/NewCard";
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+
 const NewsPage = async () => {
   const events = await db.event.findMany({
     orderBy: {
       createdAt: "desc",
     },
   });
-  const { userId } = auth();
+
+  // Lấy session từ Next-auth
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
   const regis = await db.userRegister.findMany({
     orderBy: {
       createdAt: "desc",
     },
   });
+
   return (
     <div className="w-full bg-white p-7 rounded-3xl flex flex-col gap-4 mt-4">
       <div className="flex gap-4 items-center">
@@ -24,7 +31,7 @@ const NewsPage = async () => {
         </p>
       </div>
 
-      <ListEvent events={events} userId={userId} regis={regis} />
+      <ListEvent events={events} userId={userId ?? null} regis={regis} />
     </div>
   );
 };

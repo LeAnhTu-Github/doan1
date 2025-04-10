@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Contest } from "@prisma/client";
+import { Contest, Problem } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,10 +58,13 @@ const formSchema = z.object({
   status: z.enum(["upcoming", "ongoing", "ended"]),
   isPublic: z.boolean(),
   joinCode: z.string().optional(),
+  problems: z.array(z.string()),
 });
 
 interface ContestFormProps {
-  initialData: Contest;
+  initialData: Contest & {
+    problems?: { problemId: string }[];
+  };
 }
 
 export const ContestForm = ({
@@ -52,6 +72,8 @@ export const ContestForm = ({
 }: ContestFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [availableProblems, setAvailableProblems] = useState<Problem[]>([]);
+  const [open, setOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,12 +85,40 @@ export const ContestForm = ({
       status: initialData.status as "upcoming" | "ongoing" | "ended",
       isPublic: initialData.isPublic,
       joinCode: initialData.joinCode || "",
+      problems: initialData.problems ? initialData.problems.map(p => p.problemId) : [],
     },
   });
+
+  useEffect(() => {
+    const fetchAvailableProblems = async () => {
+      try {
+        const response = await fetch('/api/contests/available-problems');
+        if (!response.ok) {
+          throw new Error("Failed to fetch problems");
+        }
+        const data = await response.json();
+        console.log("Available problems:", data);
+        setAvailableProblems(data);
+      } catch (error) {
+        toast.error("Không thể tải danh sách bài tập");
+      }
+    };
+
+    fetchAvailableProblems();
+  }, []);
+
+  // Debug initial data
+  useEffect(() => {
+    console.log("Initial contest data:", initialData);
+    console.log("Initial problems:", initialData.problems);
+  }, [initialData]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
+      
+      console.log("Form values:", values);
+      console.log("Selected problems:", values.problems);
 
       const response = await fetch(`/api/contests/${initialData.id}`, {
         method: "PUT",
@@ -79,6 +129,7 @@ export const ContestForm = ({
           ...values,
           startTime: new Date(values.startTime).toISOString(),
           endTime: new Date(values.endTime).toISOString(),
+          problemIds: values.problems,
         }),
       });
 
@@ -86,10 +137,13 @@ export const ContestForm = ({
         throw new Error("Cập nhật thất bại");
       }
 
-      toast.success("Cập nhật thành công");
+      const data = await response.json();
+      console.log("Update response:", data);
       router.refresh();
       router.push(`/teacher/contests/${initialData.id}/edit`);
+      toast.success("Cập nhật thành công");
     } catch (error) {
+      console.error("Error updating contest:", error);
       toast.error("Đã xảy ra lỗi");
     } finally {
       setIsLoading(false);
@@ -230,6 +284,70 @@ export const ContestForm = ({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="problems"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Bài tập</FormLabel>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      {field.value?.length > 0
+                        ? `Đã chọn ${field.value.length} bài tập`
+                        : "Chọn bài tập"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Tìm bài tập..." />
+                    <CommandEmpty>Không tìm thấy bài tập</CommandEmpty>
+                    <CommandGroup>
+                      {availableProblems.map((problem) => (
+                        <CommandItem
+                          key={problem.id}
+                          onSelect={() => {
+                            const currentValues = new Set(field.value);
+                            if (currentValues.has(problem.id)) {
+                              currentValues.delete(problem.id);
+                            } else {
+                              currentValues.add(problem.id);
+                            }
+                            field.onChange(Array.from(currentValues));
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value?.includes(problem.id) 
+                                ? "opacity-100" 
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span>{problem.title}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {problem.category} • {problem.difficulty}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}

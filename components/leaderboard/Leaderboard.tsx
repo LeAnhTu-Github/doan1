@@ -50,10 +50,10 @@ interface TimeFilter {
 }
 
 const timeFilters: TimeFilter[] = [
-  { label: "All Time", value: "all" },
-  { label: "This Day", value: "day" },
-  { label: "This Week", value: "week" },
-  { label: "This Month", value: "month" },
+  { label: "Tất cả", value: "all" },
+  { label: "Hôm nay", value: "day" },
+  { label: "Tuần này", value: "week" },
+  { label: "Tháng này", value: "month" },
 ];
 
 const ITEMS_PER_PAGE = 10;
@@ -72,17 +72,17 @@ const TopThreeCard = ({ entry, totalProblems }: { entry: LeaderboardEntry; total
       <div className="relative">
         <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
           <img 
-            src={entry.user.image || "/placeholder.png"} 
-            alt={entry.user.name || "User"} 
+            src={entry.user?.image || "/placeholder.png"} 
+            alt={entry.user?.name || "User"} 
             className="w-full h-full object-cover"
           />
         </div>
         <span className="absolute -top-2 -right-2 text-2xl">{medal.icon}</span>
       </div>
       <div className="text-center">
-        <h3 className="font-bold text-lg">{entry.user.name || "Anonymous"}</h3>
-        <p className="text-sm text-gray-500">{entry.user.masv}</p>
-        <p className="text-sm text-gray-500">{entry.user.class}</p>
+        <h3 className="font-bold text-lg">{entry.user?.name || "Anonymous"}</h3>
+        <p className="text-sm text-gray-500">{entry.user?.masv}</p>
+        <p className="text-sm text-gray-500">{entry.user?.class}</p>
         <div className="mt-2">
           <p className="text-2xl font-bold text-primary">{entry.totalScore.toFixed(2)}</p>
           <p className="text-sm text-gray-500">{entry.solvedCount} / {totalProblems} problems solved</p>
@@ -106,19 +106,19 @@ const UserCell = ({ user, rank }: { user: LeaderboardEntry['user']; rank: number
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
         <img 
-          src={user.image || "/placeholder.png"} 
-          alt={user.name || "User"} 
+          src={user?.image || "/placeholder.png"} 
+          alt={user?.name || "User"} 
           className="w-full h-full object-cover"
         />
       </div>
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
-          <span className="font-medium">{user.name || "Anonymous"}</span>
+          <span className="font-medium">{user?.name || "Anonymous"}</span>
           {getMedalIcon(rank) && (
             <span className="text-lg">{getMedalIcon(rank)}</span>
           )}
         </div>
-        <span className="text-sm text-gray-500">{user.masv}</span>
+        <span className="text-sm text-gray-500">{user?.masv}</span>
       </div>
     </div>
   );
@@ -215,10 +215,10 @@ export default function Leaderboard() {
                 <TableCell>
                   <UserCell user={entry.user} rank={entry.rank} />
                 </TableCell>
-                <TableCell>{entry.user.class}</TableCell>
+                <TableCell>{entry.user?.class}</TableCell>
                 <TableCell>{entry.totalScore.toFixed(2)}</TableCell>
                 <TableCell>
-                  {entry.solvedCount} / {totalProblems}
+                  {entry.solvedCount} / {totalProblems} Bài
                 </TableCell>
               </TableRow>
             ))}

@@ -1,4 +1,5 @@
 "use client";
+
 import { useCallback, useState } from "react";
 import axios from "axios";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
@@ -8,11 +9,10 @@ import Heading from "../ui/Heading";
 import Input from "./Input";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-const RegisterModal = () => {
+const RegisterModal = async () => {
   const router = useRouter();
   const registerModal = useRegisterModal();
   const [isLoading, setIsLoading] = useState(false);
-
   const {
     register,
     reset,
@@ -32,7 +32,7 @@ const RegisterModal = () => {
 
     axios
 
-      .post("/api/register", data)
+      .post(`/api/register`, data)
       .then(() => {
         toast.success("Đăng kí thông tin thành công!");
         router.refresh();

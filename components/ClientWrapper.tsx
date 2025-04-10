@@ -1,6 +1,6 @@
 "use client";
 
-import { ClerkProvider } from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
 import { ToastProvider } from "@/components/providers/toaster-provider";
 import { ConfettiProvider } from "@/components/providers/confetti-provider";
 import RegisterModal from "@/components/modals/RegisterModal";
@@ -9,13 +9,14 @@ import UpdateModal from "@/components/modals/UpdateModal";
 
 export default function ClientWrapper({ children }: { children: React.ReactNode }) {
     return (
-        <ClerkProvider>
+       <SessionProvider>
             <ConfettiProvider />
             <ToastProvider />
             <RegisterModal />
             <EventModal />
             <UpdateModal />
             {children}
-        </ClerkProvider>
+       </SessionProvider>
+           
     );
 }

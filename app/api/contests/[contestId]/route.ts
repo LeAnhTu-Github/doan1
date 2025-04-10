@@ -39,6 +39,8 @@ export async function PUT(request: Request, { params }: { params: { contestId: s
   try {
     const body = await request.json();
     const { title, description, startTime, endTime, problemIds } = body;
+    
+    console.log("Updating contest with problemIds:", problemIds);
 
     const contest = await db.contest.update({
       where: { id: params.contestId },
@@ -65,8 +67,10 @@ export async function PUT(request: Request, { params }: { params: { contestId: s
       },
     });
 
+    console.log("Contest updated successfully with problems:", contest.problems);
     return NextResponse.json(contest, { status: 200 });
   } catch (error) {
+    console.error("Error updating contest:", error);
     return NextResponse.json(
       { error: 'Failed to update contest', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

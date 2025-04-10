@@ -1,7 +1,8 @@
 // store.ts
 import { db } from "@/lib/db";
 import { getCourses } from "@/actions/get-courses";
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { courseRegister } from "@prisma/client";
 interface SearchParams {
     title: string;

@@ -2,8 +2,11 @@
 
 import { Contest } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Pencil, BarChart, Code } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, BarChart, Code, Trash } from "lucide-react";
 import Link from "next/link";
+import axios from "axios";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +14,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -153,6 +157,17 @@ export const columns: ColumnDef<ContestWithCount>[] = [
     id: "actions",
     cell: ({ row }) => {
       const { id } = row.original;
+      const router = useRouter();
+
+      const onDelete = async () => {
+        try {
+          await axios.delete(`/api/contests/${id}`);
+          toast.success("Xóa cuộc thi thành công");
+          router.refresh();
+        } catch {
+          toast.error("Đã xảy ra lỗi khi xóa cuộc thi");
+        }
+      }
 
       return (
         <DropdownMenu>
@@ -163,7 +178,7 @@ export const columns: ColumnDef<ContestWithCount>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-          <Link href={`/teacher/contests/${id}/dashboard`}>
+            <Link href={`/teacher/contests/${id}/dashboard`}>
               <DropdownMenuItem>
                 <BarChart className="h-4 w-4 mr-2" />
                 Dashboard
@@ -187,6 +202,14 @@ export const columns: ColumnDef<ContestWithCount>[] = [
                 Bài nộp
               </DropdownMenuItem>
             </Link>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Xóa cuộc thi
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -1,4 +1,5 @@
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
@@ -16,7 +17,8 @@ interface SearchPageProps {
 }
 
 const SearchPage = async ({ searchParams }: SearchPageProps) => {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
   if (!userId) {
     return redirect("/");
@@ -34,7 +36,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps) => {
   });
   const users = await db.user.findMany({
     where: {
-      clerkUserId: userId,
+      id: userId,
     },
   });
   const user = users[0];

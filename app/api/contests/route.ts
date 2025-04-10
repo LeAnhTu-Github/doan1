@@ -44,25 +44,28 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, description, startTime, endTime, problemIds } = body;
+    const { title, description, startTime, endTime, status, isPublic, joinCode, problemIds = [] } = body;
 
-    // Kiểm tra dữ liệu đầu vào
-    if (!title || !startTime || !endTime || !problemIds || !Array.isArray(problemIds)) {
-      return NextResponse.json({ error: 'Missing or invalid required fields' }, { status: 400 });
+    // Kiểm tra dữ liệu đầu vào cơ bản
+    if (!title || !startTime || !endTime) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Tạo cuộc thi mới
+    // Tạo cuộc thi mới với các trường cập nhật
     const contest = await db.contest.create({
       data: {
         title,
         description,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
-        problems: {
+        status,
+        isPublic,
+        joinCode,
+        problems: problemIds.length > 0 ? {
           create: problemIds.map((problemId: string) => ({
             problemId,
           })),
-        },
+        } : undefined,
       },
       include: {
         problems: {
@@ -75,6 +78,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(contest, { status: 201 });
   } catch (error) {
+    console.error("Create contest error:", error);
     return NextResponse.json(
       { error: 'Failed to create contest', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

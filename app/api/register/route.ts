@@ -1,33 +1,51 @@
-import { auth, currentUser } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
-
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { isTeacher } from "@/lib/teacher";
+import { z } from "zod";
 
-export async function POST(
-  req: Request,
-) {
+const userSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export async function POST(req: Request) {
   try {
-    const user = await currentUser();
-    const { userId } = auth();
-    const values = await req.json();
-    // if (!userId || !isTeacher(userId)) {
-    //   return new NextResponse("Unauthorized", { status: 401 });
-    // }
+    const body = await req.json();
+    const { email, name, password } = userSchema.parse(body);
 
-    const course = await db.user.create({
-      data: {
-        clerkUserId: userId,
-        email: user?.emailAddresses[0].emailAddress,
-        image: user?.imageUrl,
-        role: "USER",
-        ...values,
-      }
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({
+      where: { email },
     });
 
-    return NextResponse.json(course);
+    if (existingUser) {
+      return new NextResponse("User already exists", { status: 400 });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await db.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: "USER",
+      },
+    });
+
+    return NextResponse.json({
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (error) {
-    console.log("[COURSES]", error);
+    if (error instanceof z.ZodError) {
+      return new NextResponse(error.errors[0].message, { status: 400 });
+    }
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

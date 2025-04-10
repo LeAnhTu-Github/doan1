@@ -56,20 +56,20 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div>
-      <div className="flex items-center py-4 justify-between">
+          <div>
+            <div className="flex items-center py-4 justify-between">
         <Input
-          placeholder="Tìm kiếm khoá học..."
+          placeholder="Tìm kiếm cuộc thi..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("title")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
-        <Link href="/teacher/courses/create">
+        <Link href="/teacher/contests/create">
           <Button>
             <PlusCircle className="h-4 w-4 mr-2" />
-            Tạo khoá học
+            Tạo cuộc thi
           </Button>
         </Link>
       </div>

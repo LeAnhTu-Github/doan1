@@ -1,12 +1,46 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
-export default authMiddleware({
-  publicRoutes: ["/api/uploadthing"],
-});
+// Định nghĩa các route không cần bảo vệ
+const publicRoutes = ['/sign-in', '/sign-up'];
+// Định nghĩa các route cần bảo vệ
+const protectedRoutes = ['/dashboard'];
+
+export async function middleware(request: NextRequest) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const { pathname } = request.nextUrl;
+  const isLoggedIn = !!token;
+
+  // Nếu người dùng đã đăng nhập và cố truy cập trang auth
+  if (isLoggedIn && publicRoutes.includes(pathname)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Nếu người dùng chưa đăng nhập và cố truy cập trang protected
+  if (!isLoggedIn && protectedRoutes.some(route => pathname.startsWith(route))) {
+    const signInUrl = new URL('/sign-in', request.url);
+    // Lưu URL hiện tại để redirect sau khi đăng nhập
+    signInUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };

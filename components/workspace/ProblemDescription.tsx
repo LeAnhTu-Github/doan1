@@ -1,7 +1,6 @@
 "use client";
 import CircleSkeleton from "../Sekeletons/CircleSkeleton";
 import RectangleSkeleton from "../Sekeletons/RectangleSkeleton";
-import { twoSum } from "@/utils/problems/two-sum";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
@@ -44,7 +43,7 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
     }
   }, [ProblemId]);
 
-  const currentProblem = twoSum;
+
   const problemDifficultyClass = "bg-dark-layer-1 text-dark-layer-1";
   const liked = false;
   const disliked = false;

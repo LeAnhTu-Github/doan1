@@ -1,6 +1,6 @@
 import { Navbar } from "../(dashboard)/_components/navbar";
 import { Sidebar } from "../(dashboard)/_components/sidebar";
-import { clerkClient, currentUser } from "@clerk/nextjs";
+
 const EventPageLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="h-full">

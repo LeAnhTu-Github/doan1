@@ -6,141 +6,138 @@ async function main() {
   try {
     const problems = await database.problem.createMany({
       data: [
+        // ... (3 bài cũ bạn đã có)
+
         {
-          title: "Two Sum",
-          difficulty: "Easy",
-          category: "Array",
-          language: 1,
-          problemStatement: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-          examples: [
-            { input: "[2,7,11,15], target = 9", output: "[0,1]" },
-            { input: "[3,2,4], target = 6", output: "[1,2]" }
-          ],
-          constraints: "2 <= nums.length <= 10^4",
-          metadata: {
-            params: [
-              { name: "nums", type: "number[]", description: "Array of integers" },
-              { name: "target", type: "number", description: "Target sum" }
-            ],
-            return: {
-              type: "number[]",
-              description: "Indices of the two numbers"
-            }
-          },
-          codeTemplate: {
-            javascript: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    
-};`,
-            python: `def twoSum(nums: List[int], target: int) -> List[int]:
-    `,
-            cpp: `class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        
-    }
-};`,
-            java: `class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        
-    }
-}`
-          },
-          functionName: "twoSum"
-        },
-        {
-          title: "Palindrome Number",
+          title: "Đảo ngược số nguyên",
           difficulty: "Easy",
           category: "Math",
           language: 1,
-          problemStatement: "Given an integer x, return true if x is a palindrome, and false otherwise.",
+          problemStatement:
+            "Cho một số nguyên x, hãy trả về số nguyên đó sau khi đảo ngược chữ số. Nếu số bị đảo vượt quá phạm vi của số nguyên 32-bit có dấu, trả về 0.",
           examples: [
-            { input: "121", output: "true" },
-            { input: "-121", output: "false" }
+            { input: "x = 123", output: "321" },
+            { input: "x = -123", output: "-321" },
+            { input: "x = 120", output: "21" },
           ],
           constraints: "-2^31 <= x <= 2^31 - 1",
           metadata: {
             params: [
-              { name: "x", type: "number", description: "Input integer" }
+              { name: "x", type: "number", description: "Số nguyên đầu vào" },
             ],
-            return: {
-              type: "boolean",
-              description: "True if x is palindrome, false otherwise"
-            }
+            return: { type: "number", description: "Số sau khi đảo ngược" },
           },
           codeTemplate: {
-            javascript: `/**
- * @param {number} x
- * @return {boolean}
- */
-var isPalindrome = function(x) {
+            javascript: `var reverse = function(x) {
     
 };`,
-            python: `def isPalindrome(x: int) -> bool:
+            python: `def reverse(x: int) -> int:
     `,
             cpp: `class Solution {
 public:
-    bool isPalindrome(int x) {
+    int reverse(int x) {
         
     }
 };`,
             java: `class Solution {
-    public boolean isPalindrome(int x) {
+    public int reverse(int x) {
         
     }
-}`
+}`,
           },
-          functionName: "isPalindrome"
+          functionName: "reverse",
         },
         {
-          title: "Longest Substring Without Repeating Characters",
-          difficulty: "Medium",
-          category: "String",
+          title: "Tổng hai số",
+          difficulty: "Easy",
+          category: "Linked List",
           language: 1,
-          problemStatement: "Given a string s, find the length of the longest substring without repeating characters.",
-          examples: [
-            { input: '"abcabcbb"', output: "3" },
-            { input: '"bbbbb"', output: "1" }
-          ],
-          constraints: "0 <= s.length <= 5 * 10^4",
+          problemStatement:
+            "Bạn được cung cấp hai số nguyên không âm dưới dạng hai danh sách liên kết, mỗi node chứa một chữ số. Các chữ số được lưu theo thứ tự ngược lại. Hãy trả về tổng của hai số dưới dạng danh sách liên kết.",
+          examples: [{ input: "[2,4,3] + [5,6,4]", output: "[7,0,8]" }],
+          constraints: "1 <= độ dài danh sách <= 100",
           metadata: {
             params: [
-              { name: "s", type: "string", description: "Input string" }
+              {
+                name: "l1",
+                type: "ListNode",
+                description: "Danh sách liên kết thứ nhất",
+              },
+              {
+                name: "l2",
+                type: "ListNode",
+                description: "Danh sách liên kết thứ hai",
+              },
+            ],
+            return: {
+              type: "ListNode",
+              description: "Danh sách liên kết biểu diễn tổng",
+            },
+          },
+          codeTemplate: {
+            javascript: `var addTwoNumbers = function(l1, l2) {
+    
+};`,
+            python: `def addTwoNumbers(l1: ListNode, l2: ListNode) -> ListNode:
+    `,
+            cpp: `class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        
+    }
+};`,
+            java: `class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        
+    }
+}`,
+          },
+          functionName: "addTwoNumbers",
+        },
+        {
+          title: "Chuỗi con chung dài nhất",
+          difficulty: "Medium",
+          category: "Dynamic Programming",
+          language: 1,
+          problemStatement:
+            "Cho hai chuỗi văn bản text1 và text2, hãy trả về độ dài của chuỗi con chung dài nhất giữa chúng.",
+          examples: [
+            { input: '"abcde", "ace"', output: "3" },
+            { input: '"abc", "abc"', output: "3" },
+            { input: '"abc", "def"', output: "0" },
+          ],
+          constraints: "1 <= text1.length, text2.length <= 1000",
+          metadata: {
+            params: [
+              { name: "text1", type: "string", description: "Chuỗi thứ nhất" },
+              { name: "text2", type: "string", description: "Chuỗi thứ hai" },
             ],
             return: {
               type: "number",
-              description: "Length of longest substring without repeating characters"
-            }
+              description: "Độ dài chuỗi con chung dài nhất",
+            },
           },
           codeTemplate: {
-            javascript: `/**
- * @param {string} s
- * @return {number}
- */
-var lengthOfLongestSubstring = function(s) {
+            javascript: `var longestCommonSubsequence = function(text1, text2) {
     
 };`,
-            python: `def lengthOfLongestSubstring(s: str) -> int:
+            python: `def longestCommonSubsequence(text1: str, text2: str) -> int:
     `,
             cpp: `class Solution {
 public:
-    int lengthOfLongestSubstring(string s) {
+    int longestCommonSubsequence(string text1, string text2) {
         
     }
 };`,
             java: `class Solution {
-    public int lengthOfLongestSubstring(String s) {
+    public int longestCommonSubsequence(String text1, String text2) {
         
     }
-}`
+}`,
           },
-          functionName: "lengthOfLongestSubstring"
-        }
-      ]
+          functionName: "longestCommonSubsequence",
+        },
+      ],
     });
 
     console.log("Problems added successfully:", problems);

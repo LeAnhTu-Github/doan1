@@ -1,4 +1,5 @@
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { ContestForm } from "./_components/contest-form";
@@ -8,7 +9,8 @@ const ContestEditPage = async ({
 }: {
   params: { contestId: string }
 }) => {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
   if (!userId) {
     return redirect("/");
@@ -17,6 +19,13 @@ const ContestEditPage = async ({
   const contest = await db.contest.findUnique({
     where: {
       id: params.contestId
+    },
+    include: {
+      problems: {
+        select: {
+          problemId: true
+        }
+      }
     }
   });
 

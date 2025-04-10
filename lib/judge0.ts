@@ -22,6 +22,7 @@ export interface ProblemMetadata {
     type: 'number' | 'array' | 'string' | 'boolean';
     elementType?: 'number' | 'string' | 'boolean';  // for arrays
   };
+  returnType?: string;
 }
 export interface SubmissionRequest {
   source_code: string;
@@ -50,7 +51,12 @@ const apiHeaders = {
 
 export async function submitCode(request: SubmissionRequest): Promise<string> {
   try {
-    const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=false`, {
+    // Determine if we should use base64 encoding based on the language
+    // C++ submissions need base64 encoding to avoid character encoding issues
+    const languageId = request.language_id;
+    const useBase64 = languageId === languageMap.cpp;
+    
+    const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=false`, {
       method: "POST",
       headers: apiHeaders,
       body: JSON.stringify(request),
@@ -70,8 +76,15 @@ export async function submitCode(request: SubmissionRequest): Promise<string> {
 
 export async function getSubmissionResult(token: string): Promise<Judge0Result> {
   try {
+    // For C++ submissions, we need to handle base64-encoded responses
+    // We'll check the token format to determine if it's a C++ submission
+    // This is a simple heuristic - in a real implementation, you might want to
+    // store the language ID with the token or use a more robust method
+    const isCppSubmission = token.startsWith('cpp_') || token.includes('cpp');
+    const useBase64 = isCppSubmission;
+    
     const response = await fetch(
-      `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions/${token}?base64_encoded=false`, 
+      `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions/${token}?base64_encoded=${useBase64}`, 
       { headers: apiHeaders }
     );
 
@@ -87,7 +100,11 @@ export async function getSubmissionResult(token: string): Promise<Judge0Result> 
 
 export async function executeCode(request: SubmissionRequest): Promise<string> {
   try {
-    const url = `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`;
+    // Determine if we should use base64 encoding based on the language
+    // C++ submissions need base64 encoding to avoid character encoding issues
+    const languageId = request.language_id;
+    const useBase64 = languageId === languageMap.cpp;
+    const url = `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=true`;
 
     const response = await fetch(url, {
       method: "POST",

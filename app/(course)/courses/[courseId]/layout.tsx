@@ -1,5 +1,6 @@
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
 
 import { db } from "@/lib/db";
 import { getProgress } from "@/actions/get-progress";
@@ -14,7 +15,8 @@ const CourseLayout = async ({
   children: React.ReactNode;
   params: { courseId: string };
 }) => {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
   if (!userId) {
     return redirect("/");
@@ -42,6 +44,7 @@ const CourseLayout = async ({
       },
     },
   });
+
   const useProgress = await db.userProgress.findMany({
     orderBy: {
       createdAt: "desc",

@@ -1,4 +1,5 @@
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getCourses } from "@/actions/get-courses";
 import { db } from "@/lib/db";
@@ -15,7 +16,8 @@ type CourseWithProgressWithCategory = {
   userProgress: UserProgress;
 };
 const ProcessPage = async ({ params }: { params: { processId: string } }) => {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
   if (!userId) {
     return redirect("/");

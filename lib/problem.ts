@@ -8,6 +8,7 @@ export interface ProblemMetadata {
 	  type: 'number' | 'number[]' | 'string' | 'string[]' | 'boolean' | 'void';
 	  description?: string;
 	};
+	returnType?: string;
   }
   
   export interface CodeTemplate {

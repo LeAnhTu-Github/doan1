@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from "@clerk/nextjs";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { languageMap } from '@/lib/judge0';
 import { CodeWrapperService } from '@/lib/codeWrapper';
 import { db } from '@/lib/db'; // Import db từ lib/db
@@ -16,7 +17,8 @@ export async function POST(
   { params }: { params: { problemId: string } }
 ) {
   try {
-    const { userId } = await auth();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -66,7 +68,9 @@ export async function POST(
     const results = await Promise.all(
       problem.testCases.map(async (testCase) => {
         try {
-          const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`, {
+          // Use base64 encoding for C++ submissions to avoid character encoding issues
+          const useBase64 = language === 'cpp';
+          const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=true`, {
             method: "POST",
             headers: apiHeaders,
             body: JSON.stringify({
@@ -116,8 +120,8 @@ export async function POST(
     // Trước khi tạo submission mới, lấy submission cũ để so sánh điểm
     const existingSubmission = await db.practiceSubmission.findUnique({
       where: {
-        clerkUserId_problemId: {
-          clerkUserId: userId,
+        userId_problemId: {
+          userId: userId,
           problemId: problemId,
         },
       },
@@ -125,7 +129,7 @@ export async function POST(
 
     // Lấy thông tin ranking hiện tại của user
     const allSubmissions = await db.practiceSubmission.findMany({
-      where: { clerkUserId: userId },
+      where: { userId: userId },
     });
 
     // Tính tổng điểm từ các submission của các bài khác
@@ -150,8 +154,8 @@ export async function POST(
       // Chỉ tạo/cập nhật submission khi điểm cao hơn
       submission = await db.practiceSubmission.upsert({
         where: {
-          clerkUserId_problemId: {
-            clerkUserId: userId,
+          userId_problemId: {
+            userId: userId,
             problemId: problemId,
           },
         },
@@ -163,7 +167,7 @@ export async function POST(
           submittedAt: new Date(),
         },
         create: {
-          clerkUserId: userId,
+          userId: userId,
           problemId,
           code,
           language,
@@ -174,13 +178,13 @@ export async function POST(
 
       // Update user ranking chỉ khi có điểm cao hơn
       await db.userRanking.upsert({
-        where: { clerkUserId: userId },
+        where: { userId: userId },
         update: {
           totalScore,
           solvedCount,
         },
         create: {
-          clerkUserId: userId,
+          userId: userId,
           totalScore,
           solvedCount,
         },
@@ -224,7 +228,8 @@ export async function GET(
   { params }: { params: { problemId: string } }
 ) {
   try {
-    const { userId } = await auth();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -232,7 +237,7 @@ export async function GET(
     const { problemId } = params;
     const submission = await db.practiceSubmission.findFirst({
       where: {
-        clerkUserId: userId,
+        userId: userId,
         problemId: problemId,
       },
     });

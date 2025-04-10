@@ -15,7 +15,7 @@ const ContestCard = ({ contest }: ContestCardProps) => {
       style={{ width: 300 }}
       cover={
         <Image
-        src={contest.imageUrl || 'https://thuanbui.me/wp-content/uploads/2021/08/react-js.png'}
+        src={contest.imageUrl || ''}
           alt={contest.title}
           width={300}
           height={200}

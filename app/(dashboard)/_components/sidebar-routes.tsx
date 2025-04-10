@@ -37,7 +37,7 @@ const guestRoutes = [
 
 const teacherRoutes = [
   {
-    icon: BarChart,
+    icon: BookMarked,
     label: "Cuộc thi",
     href: "/teacher/contests",
   },
@@ -55,11 +55,6 @@ const teacherRoutes = [
     icon: CalendarRange,
     label: "Sự kiện",
     href: "/teacher/events",
-  },
-  {
-    icon: BookMarked,
-    label: "Điểm kiểm tra",
-    href: "/teacher/scores",
   },
 ];
 

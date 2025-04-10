@@ -5,86 +5,98 @@ async function main() {
   try {
     const testCases = await database.testCase.createMany({
       data: [
-        // Test cases for Two Sum
+        // Test cases cho bài Đảo ngược số nguyên
         {
-          problemId: "67e4c48ad50628d7b8f9522a",
-          input: { nums: [-1,-2,-3,-4,-5], target: -8 },
-          expected: "[2,4]",
+          problemId: "67f6318a2e6a2ca48791ac0a",
+          input: { x: 123 },
+          expected: "321",
           isHidden: false,
         },
-        // Test case với số 0 và số trùng nhau
         {
-          problemId: "67e4c48ad50628d7b8f9522a",
-          input: { nums: [0,0,0,0], target: 0 },
+          problemId: "67f6318a2e6a2ca48791ac0a",
+          input: { x: -123 },
+          expected: "-321",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0a",
+          input: { x: 120 },
+          expected: "21",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0a",
+          input: { x: 1534236469 },
+          expected: "0",
+          isHidden: true,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0a",
+          input: { x: -2147483648 },
+          expected: "0",
+          isHidden: true,
+        },
+
+        // Test cases cho bài Tổng hai số (Linked List)
+        {
+          problemId: "67f6318a2e6a2ca48791ac0b",
+          input: { l1: [2,4,3], l2: [5,6,4] },
+          expected: "[7,0,8]",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0b",
+          input: { l1: [0], l2: [0] },
+          expected: "[0]",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0b",
+          input: { l1: [9,9,9,9,9,9,9], l2: [9,9,9,9] },
+          expected: "[8,9,9,9,0,0,0,1]",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0b",
+          input: { l1: [5], l2: [5] },
           expected: "[0,1]",
-          isHidden: false,
-        },
-        // Test case với mảng lớn hơn và số lớn
-        {
-          problemId: "67e4c48ad50628d7b8f9522a",
-          input: { nums: [1,8,2,10,21,4,7,12,3], target: 24 },
-          expected: "[2,4]",
-          isHidden: false,
-        },
-        {
-          problemId: "67e4c48ad50628d7b8f9522a", // You'll need to replace with actual IDs
-          input: { nums: [2,7,11,15], target: 9 }, 
-          expected: "[0,1]",
-          isHidden: false,
-        },
-        {
-          problemId: "67e4c48ad50628d7b8f9522a",
-          input: { nums: [3,2,4], target: 6 },
-          expected: "[1,2]",
-          isHidden: true,
-        },
-        // Test cases for Palindrome Number
-        {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: 121 },
-          expected: "true",
-          isHidden: false,
-        },
-        {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: -121 },
-          expected: "false",
           isHidden: true,
         },
         {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: 0 },
-          expected: "true",
-          isHidden: false,
-        }, 
-        {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: 10 },
-          expected: "false",
-          isHidden: false,
-        },
-        {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: 12321 },
-          expected: "true",
-          isHidden: false,
-        },
-        {
-          problemId: "67e4c48ad50628d7b8f9522b",
-          input: { x: 1000021 },
-          expected: "false",
+          problemId: "67f6318a2e6a2ca48791ac0b",
+          input: { l1: [1,8], l2: [0] },
+          expected: "[1,8]",
           isHidden: true,
         },
-        // Test cases for Longest Substring
+
+        // Test cases cho bài Chuỗi con chung dài nhất
         {
-          problemId: "67e4c48ad50628d7b8f9522c",
-          input: { s: "abcabcbb" },
+          problemId: "67f6318a2e6a2ca48791ac0c",
+          input: { text1: "abcde", text2: "ace" },
           expected: "3",
           isHidden: false,
         },
         {
-          problemId: "67e4c48ad50628d7b8f9522c",
-          input: { s: "bbbbb" },
+          problemId: "67f6318a2e6a2ca48791ac0c",
+          input: { text1: "abc", text2: "abc" },
+          expected: "3",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0c",
+          input: { text1: "abc", text2: "def" },
+          expected: "0",
+          isHidden: false,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0c",
+          input: { text1: "abcdef", text2: "fbdamnce" },
+          expected: "3",
+          isHidden: true,
+        },
+        {
+          problemId: "67f6318a2e6a2ca48791ac0c",
+          input: { text1: "a", text2: "a" },
           expected: "1",
           isHidden: true,
         },
