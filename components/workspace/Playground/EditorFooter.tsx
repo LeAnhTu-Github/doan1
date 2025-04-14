@@ -7,9 +7,10 @@ type EditorFooterProps = {
   showConsole: boolean;
   setShowConsole: React.Dispatch<React.SetStateAction<boolean>>;
   mode: 'contest' | 'practice';
+  score?: number;
 };
 
-const EditorFooter: React.FC<EditorFooterProps> = ({ handleSubmit, handleRun, showConsole,setShowConsole, mode }) => {
+const EditorFooter: React.FC<EditorFooterProps> = ({score, handleSubmit, handleRun, showConsole,setShowConsole, mode }) => {
   
   return (
     <div className="flex bg-dark-layer-1 absolute bottom-0 z-10 w-full">
@@ -23,12 +24,14 @@ const EditorFooter: React.FC<EditorFooterProps> = ({ handleSubmit, handleRun, sh
           >
             Run
           </button>
-          <button
-            className="px-3 py-1.5 font-medium items-center transition-all focus:outline-none inline-flex text-sm text-white bg-dark-green-s hover:bg-green-3 rounded-lg"
-            onClick={handleSubmit}
-          >
-            Submit
-          </button>
+          {score === undefined && (
+            <button
+              className="px-3 py-1.5 font-medium items-center transition-all focus:outline-none inline-flex text-sm text-white bg-dark-green-s hover:bg-green-3 rounded-lg"
+              onClick={handleSubmit}
+            >
+              Submit
+            </button>
+          )}
         </div>
       </div>
     </div>

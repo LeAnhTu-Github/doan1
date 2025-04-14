@@ -4,14 +4,32 @@ import ClientOnly from "@/components/ClientOnly";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Problem } from "@prisma/client";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 10;
+
 const ProblemTableClient = ({ initialProblems }: { initialProblems: Problem[] }) => {
   const router = useRouter();
   const [filter, setFilter] = useState("Độ khó (All)");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredProblems =
     filter === "Độ khó (All)"
       ? initialProblems
       : initialProblems.filter((problem) => problem.difficulty === filter);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProblems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentPageData = filteredProblems.slice(startIndex, endIndex);
 
   const bodyContent = (
     <div className="w-full h-auto">
@@ -20,12 +38,15 @@ const ProblemTableClient = ({ initialProblems }: { initialProblems: Problem[] })
           <select
             className="select select-info w-1/5 max-w-60 my-5 mx-2"
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setCurrentPage(1); // Reset to first page when filter changes
+            }}
           >
             <option value="Độ khó (All)">Độ khó (All)</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+            <option value="Easy">Dễ</option>
+            <option value="Medium">Trung bình</option>
+            <option value="Hard">Khó</option>
           </select>
         </div>
         <table className="table">
@@ -40,7 +61,7 @@ const ProblemTableClient = ({ initialProblems }: { initialProblems: Problem[] })
             </tr>
           </thead>
           <tbody>
-            {filteredProblems?.length ? filteredProblems!.map((problem) => (
+            {currentPageData.length ? currentPageData.map((problem) => (
               <tr key={problem.id}>
                 <th>
                   <label>
@@ -75,6 +96,38 @@ const ProblemTableClient = ({ initialProblems }: { initialProblems: Problem[] })
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </div>
     </div>
   );

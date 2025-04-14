@@ -37,7 +37,10 @@ export const ProblemStats = ({
 }: ProblemStatsProps) => {
   // Tính tổng điểm cho mỗi người tham gia
   const userScores = submissions.reduce((acc, submission) => {
-    const userId = submission.clerkUserId;
+    const userId = submission.userId;
+    // Skip if userId is null
+    if (!userId) return acc;
+    
     const userName = submission.user.name || submission.user.email || 'Unknown';
     
     if (!acc[userId]) {

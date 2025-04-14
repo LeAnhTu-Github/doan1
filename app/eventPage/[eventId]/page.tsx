@@ -14,7 +14,7 @@ const page = async ({ params }: { params: IParams }) => {
     },
   });
   const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+  const userId = session?.user?.id;
   const regis = await db.userRegister.findMany({
     orderBy: {
       createdAt: "desc",
@@ -24,7 +24,7 @@ const page = async ({ params }: { params: IParams }) => {
   return (
     <div className="max-w-[2520px] mx-auto ">
       <div className="w-full h-auto rounded-3xl flex flex-col gap-4 bg-white p-10">
-        <EventClient data={data} userId={userId} regis={regis} />
+        <EventClient data={data} userId={userId || null} regis={regis || null} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import New from "@/components/news/New";
 import { CoursesList } from "@/components/courses-list";
 import { InfoCard } from "./_components/info-card";
@@ -11,8 +12,6 @@ import Footer from "@/components/Footer";
 import ProblemsPage from "@/components/problem/page";
 import ContestPage from "@/components/contests/Contest";
 import Leaderboard from "@/components/leaderboard/Leaderboard";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 
 interface SearchPageProps {
   searchParams: {
@@ -23,20 +22,11 @@ interface SearchPageProps {
 
 export default async function Dashboard({ searchParams }: SearchPageProps) {
   const session = await getServerSession(authOptions);
-  
-  if (!session?.user) {
-    return redirect("/");
-  }
-
   const users = await db.user.findUnique({
     where: {
-      email: session.user.email!,
+      email: session?.user?.email!,
     },
   });
-
-  if (!users) {
-    return redirect("/");
-  }
 
   const events = await db.event.findMany({
     orderBy: {
@@ -50,7 +40,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
   });
   const regisUsers = await db.courseRegister.findMany({
     where: {
-      userId: users.id,
+      userId: users?.id!,
     },
   });
   const regisEvents = await db.userRegister.findMany({
@@ -59,10 +49,9 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
     },
   });
   const regis = regisUsers[0];
-  const resolvedSearchParams = await searchParams;
   const courses = await getCourses({
-    userId: users.id,
-    ...resolvedSearchParams,
+    userId: users?.id!,
+    ...searchParams,
   });
 
   return (
@@ -78,11 +67,8 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         </div>
         <Leaderboard />
       </div>
-      <New events={events} userId={users.id} regis={regisEvents} />
+      <New events={events} userId={users?.id!} regis={regisEvents} />
       
-      {/* Leaderboard Section */}
-      
-
       <div className="w-full bg-white p-7 rounded-3xl flex flex-col gap-4 mt-4">
         <div className="flex gap-4 items-center">
           <div className="w-5 h-9 rounded-md bg-[#4d8aed]"></div>
@@ -95,7 +81,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         </div>
         <div className="py-6 space-y-4">
           <Categories items={categories} />
-          <CoursesList items={courses} user={users} regis={regis} />
+          <CoursesList items={courses} user={users!} regis={regis} />
         </div>
       </div>
       

@@ -6,7 +6,6 @@ import { ArrowUpDown, MoreHorizontal, Pencil, BarChart, Code, Trash } from "luci
 import Link from "next/link";
 import axios from "axios";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -157,13 +156,12 @@ export const columns: ColumnDef<ContestWithCount>[] = [
     id: "actions",
     cell: ({ row }) => {
       const { id } = row.original;
-      const router = useRouter();
 
       const onDelete = async () => {
         try {
           await axios.delete(`/api/contests/${id}`);
           toast.success("Xóa cuộc thi thành công");
-          router.refresh();
+          window.location.reload();
         } catch {
           toast.error("Đã xảy ra lỗi khi xóa cuộc thi");
         }

@@ -85,7 +85,7 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
           </div>
         </div>
         <div className="flex px-0 py-4 h-[calc(100vh-94px)] overflow-y-auto">
-          <div className="px-5 text-white">Không tìm thấy bài kiểm tra</div>
+          <div className="px-5 text-white">Không tìm thấy bài tập nào</div>
         </div>
       </div>
     );

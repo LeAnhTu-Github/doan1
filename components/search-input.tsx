@@ -1,22 +1,24 @@
-"use client";
+'use client';
 
-import qs from "query-string";
-import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import qs from 'query-string';
+import { Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
-import { Input } from "@/components/ui/input";
-import { useDebounce } from "@/hooks/use-debounce";
+import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export const SearchInput = () => {
-  const [value, setValue] = useState("");
-  const debouncedValue = useDebounce(value);
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const currentCategoryId = searchParams.get("categoryId");
+  // Khởi tạo giá trị ban đầu từ searchParams
+  const initialTitle = searchParams.get('title') || '';
+  const [value, setValue] = useState(initialTitle);
+  const debouncedValue = useDebounce(value, 500); // Giả sử độ trễ là 500ms
+
+  const currentCategoryId = searchParams.get('categoryId');
 
   useEffect(() => {
     const url = qs.stringifyUrl(
@@ -32,6 +34,14 @@ export const SearchInput = () => {
 
     router.push(url);
   }, [debouncedValue, currentCategoryId, router, pathname]);
+
+  // Cập nhật giá trị khi searchParams thay đổi (ví dụ: khi người dùng quay lại)
+  useEffect(() => {
+    const newTitle = searchParams.get('title') || '';
+    if (newTitle !== value) {
+      setValue(newTitle);
+    }
+  }, [searchParams]);
 
   return (
     <div className="relative">

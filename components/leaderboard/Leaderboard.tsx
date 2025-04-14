@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Medal } from "lucide-react";
+import Image from "next/image"; // Import Next.js Image component
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -70,11 +71,14 @@ const TopThreeCard = ({ entry, totalProblems }: { entry: LeaderboardEntry; total
   return (
     <Card className={`p-6 flex flex-col items-center justify-center gap-4 transform hover:scale-105 transition-transform duration-200 ${entry.rank === 1 ? 'bg-gradient-to-br from-yellow-100 to-yellow-50' : ''}`}>
       <div className="relative">
-        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
-          <img 
-            src={entry.user?.image || "/placeholder.png"} 
-            alt={entry.user?.name || "User"} 
-            className="w-full h-full object-cover"
+        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg relative">
+          <Image
+            src={entry.user?.image || "/placeholder.png"}
+            alt={entry.user?.name || "User"}
+            fill
+            sizes="80px"
+            className="object-cover"
+            priority={entry.rank === 1} // Optional: prioritize loading for top rank
           />
         </div>
         <span className="absolute -top-2 -right-2 text-2xl">{medal.icon}</span>
@@ -85,7 +89,7 @@ const TopThreeCard = ({ entry, totalProblems }: { entry: LeaderboardEntry; total
         <p className="text-sm text-gray-500">{entry.user?.class}</p>
         <div className="mt-2">
           <p className="text-2xl font-bold text-primary">{entry.totalScore.toFixed(2)}</p>
-          <p className="text-sm text-gray-500">{entry.solvedCount} / {totalProblems} problems solved</p>
+          <p className="text-sm text-gray-500">{entry.solvedCount} / {totalProblems} bài giải</p>
         </div>
       </div>
     </Card>
@@ -104,11 +108,13 @@ const UserCell = ({ user, rank }: { user: LeaderboardEntry['user']; rank: number
 
   return (
     <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
-        <img 
-          src={user?.image || "/placeholder.png"} 
-          alt={user?.name || "User"} 
-          className="w-full h-full object-cover"
+      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 relative">
+        <Image
+          src={user?.image || "/placeholder.png"}
+          alt={user?.name || "User"}
+          fill
+          sizes="40px"
+          className="object-cover"
         />
       </div>
       <div className="flex flex-col">
@@ -137,7 +143,6 @@ export default function Leaderboard() {
         const response = await axios.get(`/api/leaderboard?timeFilter=${timeFilter}`);
         setLeaderboard(response.data.leaderboard);
         const problemsResponse = await axios.get('/api/problems/count');
-        console.log(1111, problemsResponse.data.count);
         setTotalProblems(problemsResponse.data.count);
       } catch (error) {
         console.error("Failed to fetch leaderboard:", error);
@@ -259,4 +264,4 @@ export default function Leaderboard() {
       </Card>
     </div>
   );
-} 
+}

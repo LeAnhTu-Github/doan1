@@ -22,7 +22,7 @@ import { AddressForm } from "./_components/address-form";
 
 import { Actions } from "./_components/actions";
 import { DateForm } from "./_components/date-form";
-const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
+const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
@@ -30,27 +30,33 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
     return redirect("/");
   }
 
-  const course = await db.event.findUnique({
+  const event = await db.event.findUnique({
     where: {
       id: params.eventId,
-      userId,
     },
   });
 
-  if (!course) {
-    return redirect("/");
+  if (!event) {
+    return redirect("/teacher/events?error=event-not-found");
+  }
+
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER";
+  const isOwner = event.userId === userId;
+
+  if (!isAdmin && !isOwner) {
+    return redirect("/teacher/events?error=unauthorized");
   }
 
   const requiredFields = [
-    course.title,
-    course.name,
-    course.description,
-    course.imageUrl,
-    course.link,
-    course.date,
-    course.host,
-    course.author,
-    course.address,
+    event.title,
+    event.name,
+    event.description,
+    event.imageUrl,
+    event.link,
+    event.date,
+    event.host,
+    event.author,
+    event.address,
   ];
 
   const totalFields = requiredFields.length;
@@ -62,7 +68,7 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
 
   return (
     <>
-      {!course.isPublished && (
+      {!event.isPublished && (
         <Banner label="This event is unpublished. It will not be visible to the students." />
       )}
       <div className="p-6">
@@ -76,7 +82,7 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
           <Actions
             disabled={!isComplete}
             courseId={params.eventId}
-            isPublished={course.isPublished}
+            isPublished={event.isPublished}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
@@ -85,10 +91,10 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
               <IconBadge icon={LayoutDashboard} />
               <h2 className="text-xl">Tuỳ chỉnh sự kiện của bạn</h2>
             </div>
-            <TitleForm initialData={course} courseId={course.id} />
-            <NameForm initialData={course} courseId={course.id} />
-            <DescriptionForm initialData={course} courseId={course.id} />
-            <ImageForm initialData={course} courseId={course.id} />
+            <TitleForm initialData={event} courseId={event.id} />
+            <NameForm initialData={event} courseId={event.id} />
+            <DescriptionForm initialData={event} courseId={event.id} />
+            <ImageForm initialData={event} courseId={event.id} />
           </div>
           <div className="space-y-6">
             <div>
@@ -96,11 +102,11 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
                 <IconBadge icon={ListChecks} />
                 <h2 className="text-xl">Chi tiết sự kiện</h2>
               </div>
-              <HostForm initialData={course} courseId={course.id} />
-              <AuthorForm initialData={course} courseId={course.id} />
-              <LinkForm initialData={course} courseId={course.id} />
-              <AddressForm initialData={course} courseId={course.id} />
-              <DateForm initialData={course} courseId={course.id} />
+              <HostForm initialData={event} courseId={event.id} />
+              <AuthorForm initialData={event} courseId={event.id} />
+              <LinkForm initialData={event} courseId={event.id} />
+              <AddressForm initialData={event} courseId={event.id} />
+              <DateForm initialData={event} courseId={event.id} />
             </div>
             <div></div>
           </div>
@@ -110,4 +116,4 @@ const CourseIdPage = async ({ params }: { params: { eventId: string } }) => {
   );
 };
 
-export default CourseIdPage;
+export default EventIdPage;

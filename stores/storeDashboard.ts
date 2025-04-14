@@ -10,7 +10,8 @@ interface SearchParams {
 }
 
 export async function storeDashboard(searchParams: SearchParams) {
-    const { userId } = await auth();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
     if (!userId) return { user: null };
 
     const user = await db.user.findUnique({ where: { id: userId } });

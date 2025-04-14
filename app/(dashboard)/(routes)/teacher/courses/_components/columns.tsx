@@ -2,7 +2,7 @@
 
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Pencil } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export const columns: ColumnDef<Course>[] = [
+// Extend Course type to include chapters and enrollments count
+type CourseWithCounts = Course & {
+  _count: {
+    chapters: number;
+    courseRegister: number;
+  }
+};
+
+export const columns: ColumnDef<CourseWithCounts>[] = [
   {
     accessorKey: "title",
     header: ({ column }) => {
@@ -31,7 +39,7 @@ export const columns: ColumnDef<Course>[] = [
     },
   },
   {
-    accessorKey: "description",
+    accessorKey: "_count.chapters",
     header: ({ column }) => {
       return (
         <Button
@@ -41,6 +49,38 @@ export const columns: ColumnDef<Course>[] = [
           Số chương
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const chaptersCount = row.original._count.chapters;
+      return (
+        <div className="flex items-center gap-x-2">
+          <BookOpen className="h-4 w-4 text-slate-500" />
+          {chaptersCount} chương
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "_count.courseRegister",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Số người học
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const studentsCount = row.original._count.courseRegister;
+      return (
+        <div className="flex items-center gap-x-2">
+          <Users className="h-4 w-4 text-slate-500" />
+          {studentsCount} học viên
+        </div>
       );
     },
   },

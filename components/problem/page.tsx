@@ -9,7 +9,7 @@ export default async function ProblemsPage() {
                 <div className="flex gap-4 items-center">
                     <div className="w-5 h-9 rounded-md bg-[#fc4222]"></div>
                     <p className="text-[#06080F] text-2xl font-semibold">
-                        Bài kiểm tra
+                        Bài tập
                     </p>
                 </div>
                 <ProblemTableClient initialProblems={problems} />

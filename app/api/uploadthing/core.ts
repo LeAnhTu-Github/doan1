@@ -1,17 +1,14 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-
-import { isTeacher } from "@/lib/teacher";
  
 const f = createUploadthing();
  
 const handleAuth = async () => {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-  const isAuthorized = isTeacher(userId);
+  if (!userId) throw new Error("Unauthorized");
 
-  // if (!userId || !isAuthorized) throw new Error("Unauthorized");
   return { userId };
 }
 

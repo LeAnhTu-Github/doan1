@@ -34,21 +34,22 @@ const ChapterIdPage = async ({
     chapterId: params.chapterId,
     courseId: params.courseId,
   });
-  // const useProgress = await db.userProgress.findMany({
-  //   orderBy: {
-  //     createdAt: "desc",
-  //   },
-  // });
-  // const check = useProgress.some(
-  //   (process) =>
-  //     process.chapterId === previousChapter?.id &&
-  //     process.userId === userId &&
-  //     process.isCompleted
-  // );
-  // const isLocked = previousChapter ? !check : false;
-  const isLocked = previousChapter ? true : false;
-  //const completeOnEnd = !userProgress?.isCompleted;
-  const completeOnEnd = false;
+
+  // Kiểm tra tiến độ của bài học trước
+  const previousChapterProgress = previousChapter ? await db.userProgress.findFirst({
+    where: {
+      userId: userId,
+      chapterId: previousChapter.id,
+      isCompleted: true
+    }
+  }) : null;
+
+  // Chỉ khoá nếu có bài trước đó VÀ chưa hoàn thành bài trước
+  const isLocked = previousChapter ? !previousChapterProgress : false;
+  
+  // Cho phép đánh dấu hoàn thành
+  const completeOnEnd = !userProgress?.isCompleted;
+
   return (
     <div>
       {/* {userProgress?.isCompleted && (
@@ -68,7 +69,7 @@ const ChapterIdPage = async ({
             courseId={params?.courseId}
             nextChapterId={nextChapter?.id}
             playbackId={muxData?.playbackId!}
-            isLocked={!!isLocked}
+            isLocked={isLocked}
             completeOnEnd={completeOnEnd}
           />
         </div>

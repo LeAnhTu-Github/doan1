@@ -16,12 +16,17 @@ const CoursesPage = async () => {
   }
 
   const courses = await db.course.findMany({
-    where: {
-      userId,
+    where:{
+      userId: userId,
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    include: {
+      _count: {
+        select: {
+          chapters: true,
+          courseRegister: true,
+        }
+      }
+    }
   });
 
   return (

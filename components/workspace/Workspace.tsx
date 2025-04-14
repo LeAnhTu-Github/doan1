@@ -11,6 +11,7 @@ type WorkspaceProps = {
   id: string;
   setProblemScores: (problemId: string, score: number) => void;
   mode: 'contest' | 'practice';
+  score?: number;
 };
 
 const Workspace = ({ id, setProblemScores, mode }: WorkspaceProps) => {

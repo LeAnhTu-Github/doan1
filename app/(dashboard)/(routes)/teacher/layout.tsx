@@ -10,8 +10,8 @@ const TeacherLayout = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-
-  if (!isTeacher(userId)) {
+  const isTeacher = session?.user.role === "ADMIN" || session?.user.role === "MANAGER";
+  if (!isTeacher) {
     return redirect("/");
   }
 

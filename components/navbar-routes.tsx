@@ -6,13 +6,13 @@ import { LogOut } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { isTeacher } from "@/lib/teacher";
 import { SearchInput } from "./search-input";
 import UserButton from "./user-account-nav";
 
 export const NavbarRoutes = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const isTeacherUser = session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER";
   
   const isTeacherPage = pathname?.startsWith("/teacher");
   const isCoursePage = pathname?.includes("/courses");
@@ -33,7 +33,7 @@ export const NavbarRoutes = () => {
               Exit
             </Button>
           </Link>
-        ) : isTeacher(session?.user?.id) ? (
+        ) : isTeacherUser ? (
           <Link href="/teacher/courses">
             <Button size="lg" variant="ghost">
               Teacher mode

@@ -10,7 +10,6 @@ import { Banner } from "@/components/banner";
 
 import { ChapterTitleForm } from "./_components/chapter-title-form";
 import { ChapterDescriptionForm } from "./_components/chapter-description-form";
-import { ChapterAccessForm } from "./_components/chapter-access-form";
 import { ChapterVideoForm } from "./_components/chapter-video-form";
 import { ChapterActions } from "./_components/chapter-actions";
 
@@ -65,13 +64,13 @@ const ChapterIdPage = async ({
               className="flex items-center text-sm hover:opacity-75 transition mb-6"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to course setup
+              Quay lại tùy chỉnh khóa học
             </Link>
             <div className="flex items-center justify-between w-full">
               <div className="flex flex-col gap-y-2">
-                <h1 className="text-2xl font-medium">Chapter Creation</h1>
+                <h1 className="text-2xl font-medium">Tạo chương</h1>
                 <span className="text-sm text-slate-700">
-                  Complete all fields {completionText}
+                  Hoàn tất tất cả các trường {completionText}
                 </span>
               </div>
               <ChapterActions
@@ -88,7 +87,7 @@ const ChapterIdPage = async ({
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={LayoutDashboard} />
-                <h2 className="text-xl">Customize your chapter</h2>
+                <h2 className="text-xl">Tùy chỉnh chương</h2>
               </div>
               <ChapterTitleForm
                 initialData={chapter}
@@ -101,22 +100,11 @@ const ChapterIdPage = async ({
                 chapterId={params.chapterId}
               />
             </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={Eye} />
-                <h2 className="text-xl">Access Settings</h2>
-              </div>
-              <ChapterAccessForm
-                initialData={chapter}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-              />
-            </div>
           </div>
           <div>
             <div className="flex items-center gap-x-2">
               <IconBadge icon={Video} />
-              <h2 className="text-xl">Add a video</h2>
+              <h2 className="text-xl">Tải lên video</h2>
             </div>
             <ChapterVideoForm
               initialData={chapter}

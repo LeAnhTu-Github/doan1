@@ -42,7 +42,7 @@ const SectionInfo = ({ currentUser }: SidebarProps) => {
         </div>
         <div className="w-1/3 h-full bg-[url('/images/nav3.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2 flex flex-col">
           <p className="text-[#797D85] text-sm font-medium">
-            Bài kiểm tra đã làm
+            Bài tập đã làm
           </p>
           <p className="text-[#06080F] text-2xl font-semibold pt-2">
             {currentUser?.problems?.length || 0} {/* Giả sử có field tests */}

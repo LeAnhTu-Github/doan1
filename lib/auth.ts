@@ -123,5 +123,9 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Luôn redirect về trang chủ sau khi đăng nhập
+      return baseUrl;
+    }
   },
 };

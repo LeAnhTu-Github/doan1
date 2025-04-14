@@ -224,7 +224,8 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       return;
     }
 
-    if (!window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
+    // Chỉ hiển thị confirm dialog trong practice mode
+    if (mode === 'practice' && !window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
       return;
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import useRegisterModal from "@/hooks/useRegisterModal";
@@ -9,9 +9,13 @@ import Heading from "../ui/Heading";
 import Input from "./Input";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-const RegisterModal = async () => {
+import { useSession } from "next-auth/react"; // Nếu dùng NextAuth
+
+const RegisterModal = () => {
   const router = useRouter();
   const registerModal = useRegisterModal();
+  const { data: session } = useSession(); // Lấy session từ NextAuth
+  const email = session?.user?.email || ""; // Lấy email từ session
   const [isLoading, setIsLoading] = useState(false);
   const {
     register,
@@ -28,19 +32,25 @@ const RegisterModal = async () => {
   });
 
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
+    if (!email) {
+      toast.error("Bạn cần đăng nhập để cập nhật thông tin!");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
     axios
-
-      .post(`/api/register`, data)
+      .put(`/api/register/create`, { ...data, email }) // Gửi email cùng dữ liệu
       .then(() => {
-        toast.success("Đăng kí thông tin thành công!");
+        toast.success("Cập nhật thông tin thành công!");
         router.refresh();
         reset();
         registerModal.onClose();
       })
-      .catch(() => {
-        toast.error("Đăng kí thất bại.");
+      .catch((error) => {
+        console.error("Error from server:", error.response?.data); // Log lỗi
+        toast.error("Cập nhật thất bại.");
       })
       .finally(() => {
         setIsLoading(false);
@@ -50,8 +60,8 @@ const RegisterModal = async () => {
   const bodyContent = (
     <div className="flex flex-col gap-4">
       <Heading
-        title="Chào mừng đến với Website"
-        subtitle="Đăng kí thông tin của bạn tại đây!"
+        title="Bổ sung thông tin"
+        subtitle="Cập nhật thông tin cá nhân của bạn tại đây!"
       />
       <Input
         id="masv"
@@ -93,8 +103,8 @@ const RegisterModal = async () => {
     <Modal
       disabled={isLoading}
       isOpen={registerModal.isOpen}
-      title="Đăng kí thông tin"
-      actionLabel="Đăng kí"
+      title="Bổ sung thông tin"
+      actionLabel="Cập nhật"
       onClose={registerModal.onClose}
       onSubmit={handleSubmit(onSubmit)}
       body={bodyContent}

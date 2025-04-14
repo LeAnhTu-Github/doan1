@@ -5,7 +5,7 @@ export const getAnalytics = async (userId: string) => {
     // Lấy tất cả các submission của user
     const submissions = await db.practiceSubmission.findMany({
       where: {
-        clerkUserId: userId
+        userId: userId
       },
       include: {
         problem: true // Include thông tin về problem để group theo category nếu cần
@@ -15,7 +15,7 @@ export const getAnalytics = async (userId: string) => {
     // Lấy thông tin ranking của user
     const userRanking = await db.userRanking.findUnique({
       where: {
-        clerkUserId: userId
+        userId: userId
       }
     });
 

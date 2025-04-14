@@ -1,6 +1,6 @@
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 // Định nghĩa các route không cần bảo vệ
 const publicRoutes = ['/sign-in', '/sign-up'];
@@ -8,17 +8,19 @@ const publicRoutes = ['/sign-in', '/sign-up'];
 const protectedRoutes = ['/dashboard'];
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const token = await getToken({ req: request });
+  
+  // Nếu chưa đăng nhập và không phải đang ở trang sign-in
+  if (!token && request.nextUrl.pathname !== "/sign-in") {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
 
   const { pathname } = request.nextUrl;
   const isLoggedIn = !!token;
 
   // Nếu người dùng đã đăng nhập và cố truy cập trang auth
   if (isLoggedIn && publicRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Nếu người dùng chưa đăng nhập và cố truy cập trang protected
@@ -32,6 +34,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Áp dụng middleware cho tất cả các route trừ api và các static files
 export const config = {
   matcher: [
     /*
