@@ -8,7 +8,6 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Event } from "@prisma/client";
 
 import {
   Form,
@@ -16,35 +15,34 @@ import {
   FormField,
   FormItem,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-interface DateFormProps {
-  initialData: Event & { date: string | null };
-  eventId: string;
+interface DescriptionFormProps {
+  initialData: {
+    problemStatement: string;
+  } | null;
+  problemId: string;
 }
 
 const formSchema = z.object({
-  date: z.string()
+  problemStatement: z.string().min(1, {
+    message: "Mô tả bài tập là bắt buộc",
+  }),
 });
 
-export const DateForm = ({ initialData, eventId }: DateFormProps) => {
+export const DescriptionForm = ({ initialData, problemId }: DescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const toggleEdit = () => setIsEditing((current) => !current);
-  const router = useRouter();
 
-  const formatDateForInput = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toISOString().slice(0, 16);
-  };
+  const toggleEdit = () => setIsEditing((current) => !current);
+
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: formatDateForInput(initialData.date)
+    defaultValues: initialData || {
+      problemStatement: "",
     },
   });
 
@@ -52,55 +50,32 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/events/${eventId}`, {
-        date: values.date
-      });
-      toast.success("Cập nhật ngày thành công");
+      await axios.patch(`/api/problems/${problemId}`, values);
+      toast.success("Bài tập đã được cập nhật");
       toggleEdit();
       router.refresh();
-    } catch (error) {
-      console.error("Error updating date:", error);
-      toast.error("Đã xảy ra lỗi khi cập nhật ngày");
+    } catch {
+      toast.error("Đã xảy ra lỗi");
     }
-  };
-
-  const formatDisplayDate = (date: Date | null) => {
-    if (!date) return "Chưa có ngày";
-    return new Date(date).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Ngày diễn ra sự kiện
+        Mô tả bài tập
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Hủy</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Chỉnh sửa ngày
+              Chỉnh sửa mô tả
             </>
           )}
         </Button>
       </div>
-      {!isEditing && (
-        <p
-          className={cn(
-            "text-sm mt-2",
-            !initialData.date && "text-slate-500 italic"
-          )}
-        >
-          {initialData.date 
-            ? formatDisplayDate(new Date(initialData.date)) 
-            : "Chưa có ngày"}
-        </p>
+      {!isEditing && initialData && (
+        <p className="text-sm mt-2 whitespace-pre-wrap">{initialData.problemStatement}</p>
       )}
       {isEditing && (
         <Form {...form}>
@@ -110,22 +85,17 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
           >
             <FormField
               control={form.control}
-              name="date"
+              name="problemStatement"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      type="datetime-local"
+                    <Textarea
                       disabled={isSubmitting}
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
+                      placeholder="Mô tả chi tiết bài tập..."
+                      className="min-h-[200px]"
+                      {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Chọn ngày và giờ diễn ra sự kiện
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -140,4 +110,4 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
       )}
     </div>
   );
-};
+}; 

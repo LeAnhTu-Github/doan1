@@ -49,8 +49,8 @@ const formSchema = z.object({
   startTime: z.string().min(1, {
     message: "Thời gian bắt đầu là bắt buộc",
   }),
-  endTime: z.string().min(1, {
-    message: "Thời gian kết thúc là bắt buộc",
+  duration: z.number().min(1, {
+    message: "Thời lượng là bắt buộc",
   }),
   status: z.enum(["upcoming", "ongoing", "ended"]).default("upcoming"),
   isPublic: z.boolean().default(false),
@@ -67,7 +67,7 @@ const CreatePage = () => {
       imageUrl: "",
       description: "",
       startTime: "",
-      endTime: "",
+      duration: 0,
       status: "upcoming",
       isPublic: false,
       joinCode: "",
@@ -82,7 +82,7 @@ const CreatePage = () => {
       const response = await axios.post("/api/contests", {
         ...values,
         startTime: new Date(values.startTime).toISOString(),
-        endTime: new Date(values.endTime).toISOString(),
+        duration: values.duration,
       });
       router.push(`/teacher/contests/${response.data.id}`);
       toast.success("Cuộc thi đã được tạo thành công");
@@ -212,17 +212,23 @@ const CreatePage = () => {
 
               <FormField
                 control={form.control}
-                name="endTime"
+                name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thời gian kết thúc</FormLabel>
+                    <FormLabel>Thời lượng (phút)</FormLabel>
                     <FormControl>
                       <Input
-                        type="datetime-local"
+                        type="number"
+                        min="1"
                         disabled={isSubmitting}
+                        placeholder="e.g. '120' cho 2 giờ"
                         {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
+                    <FormDescription>
+                      Nhập thời lượng cuộc thi tính bằng phút
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -44,20 +44,25 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, description, startTime, endTime, status, isPublic, joinCode, problemIds = [] } = body;
+    const { title, description, startTime, duration, status, isPublic, joinCode, problemIds = [], imageUrl } = body;
 
     // Kiểm tra dữ liệu đầu vào cơ bản
-    if (!title || !startTime || !endTime) {
+    if (!title || !startTime || !duration) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Tính thời gian kết thúc từ startTime và duration
+    const start = new Date(startTime);
+    const end = new Date(start.getTime() + duration * 60000); // Convert minutes to milliseconds
 
     // Tạo cuộc thi mới với các trường cập nhật
     const contest = await db.contest.create({
       data: {
         title,
         description,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        imageUrl,
+        startTime: start,
+        duration,
         status,
         isPublic,
         joinCode,

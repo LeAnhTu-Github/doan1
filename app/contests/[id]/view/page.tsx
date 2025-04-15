@@ -1,27 +1,19 @@
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { DashboardHeader } from "./_components/dashboard-header";
-import { ParticipantProgress } from "./_components/participant-progress";
-import { ProblemStats } from "./_components/problem-stats";
-import { RecentSubmissions } from "./_components/recent-submissions";
+import { DashboardHeader } from "@/app/(dashboard)/(routes)/teacher/contests/[contestId]/dashboard/_components/dashboard-header";
+import { ParticipantProgress } from "@/app/(dashboard)/(routes)/teacher/contests/[contestId]/dashboard/_components/participant-progress";
+import { ProblemStats } from "@/app/(dashboard)/(routes)/teacher/contests/[contestId]/dashboard/_components/problem-stats";
+import { RecentSubmissions } from "@/app/(dashboard)/(routes)/teacher/contests/[contestId]/dashboard/_components/recent-submissions";
 import { Problem } from "@prisma/client";
-import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-const ContestDashboardPage = async ({
+const ContestViewPage = async ({
   params
 }: {
-  params: { contestId: string }
+  params: { id: string }
 }) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return redirect("/");
-  }
-
   const contest = await db.contest.findUnique({
     where: {
-      id: params.contestId
+      id: params.id
     },
     include: {
       problems: {
@@ -54,10 +46,9 @@ const ContestDashboardPage = async ({
   });
 
   if (!contest) {
-    return redirect("/teacher/contests");
+    return redirect("/contests");
   }
 
-  // Filter out participants and submissions with null users
   const validParticipants = contest.participants.filter(
     (participant): participant is typeof participant & { user: NonNullable<typeof participant.user> } => 
     participant.user !== null
@@ -92,4 +83,4 @@ const ContestDashboardPage = async ({
   );
 };
 
-export default ContestDashboardPage;
+export default ContestViewPage;

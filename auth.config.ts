@@ -7,6 +7,7 @@ export const authConfig: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
     signIn: "/sign-in",
+    newUser: "/sign-up",
   },
   providers: [], // sẽ được thêm trong auth.ts
 };

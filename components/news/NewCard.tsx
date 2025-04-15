@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import useEventModal from "@/hooks/useEventModal";
 import { Event } from "@prisma/client";
 import { userRegister } from "@prisma/client";
+import moment from "moment";
+import "moment/locale/vi"; // Import locale tiếng Việt
+
 interface DataProps {
   regis: userRegister[];
   userId: string | null;
@@ -41,7 +44,9 @@ const NewsCard = ({ event, userId, regis }: DataProps) => {
           Diễn giả: {event?.author}
         </p>
         <p className="text-xs text-muted-foreground">
-          Thời gian: {event?.date}
+          Thời gian: {event?.date 
+            ? moment(event.date).locale('vi').format('DD/MM/YYYY HH:mm')
+            : "Chưa có ngày"}
         </p>
 
         <div className="flex justify-between w-full h-[36px] mt-5">

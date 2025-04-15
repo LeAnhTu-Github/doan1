@@ -30,13 +30,13 @@ export const NavbarRoutes = () => {
           <Link href="/">
             <Button size="sm" variant="ghost">
               <LogOut className="h-4 w-4 mr-2" />
-              Exit
+              Thoát
             </Button>
           </Link>
         ) : isTeacherUser ? (
           <Link href="/teacher/courses">
             <Button size="lg" variant="ghost">
-              Teacher mode
+              Chế độ giáo viên
             </Button>
           </Link>
         ) : null}

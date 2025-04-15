@@ -6,6 +6,7 @@ import useEventModal from "@/hooks/useEventModal";
 import HeartButton from "@/components/ui/HeartButton";
 import { Event } from "@prisma/client";
 import { userRegister } from "@prisma/client";
+import CountdownTimer from './_components/CountdownTimer';
 
 interface EventClientProps {
   data: Event | undefined;
@@ -25,7 +26,16 @@ const EventClient = ({ data, regis, userId }: EventClientProps) => {
       <div className="mb-10 text-center animate-fade-in">
         <Heading
           title={data?.name ?? "Sự kiện không xác định"}
-          subtitle={data?.date ?? "Chưa có ngày"}
+          subtitle={data?.date 
+            ? new Date(data.date).toLocaleString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+              })
+            : "Chưa có ngày"
+          }
           className="text-4xl font-bold text-gray-900 tracking-tight"
           subtitleClassName="text-lg text-gray-500 mt-2"
         />
@@ -74,24 +84,34 @@ const EventClient = ({ data, regis, userId }: EventClientProps) => {
         <div className="lg:col-span-2">
           <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl shadow-xl p-8 sticky top-8 animate-slide-up">
             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Tham gia ngay</h3>
-            <div className="text-center mb-8">
-              <p className="text-gray-600 text-sm uppercase tracking-wide">Thời gian còn lại</p>
-              <p className="text-3xl font-extrabold text-blue-700 mt-2 animate-pulse">
-                12d : 3h : 24m
-              </p>
+            
+            {/* Thay thế phần countdown cũ bằng CountdownTimer */}
+            <div className="mb-8">
+              <CountdownTimer targetDate={data?.date} />
             </div>
+
             <button
               className={`
                 w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300
-                ${isRegistered
+                ${isRegistered || !data?.date || new Date(data?.date || "") <= new Date()
                   ? "bg-green-100 text-green-800 border border-green-300 cursor-not-allowed opacity-80"
                   : "bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900 hover:shadow-lg transform hover:-translate-y-1"
                 }
               `}
-              onClick={() => !isRegistered && eventModal.onOpen(data?.id ?? "")}
-              disabled={isRegistered}
+              onClick={() => {
+                if (!isRegistered && data?.date && new Date(data.date) > new Date()) {
+                  eventModal.onOpen(data?.id ?? "");
+                }
+              }}
+              disabled={isRegistered || !data?.date || new Date(data?.date || "") <= new Date()}
             >
-              {isRegistered ? "Đã đăng ký" : "Đăng ký sự kiện"}
+              {isRegistered 
+                ? "Đã đăng ký" 
+                : !data?.date 
+                  ? "Chưa có thời gian"
+                  : new Date(data?.date || "") <= new Date()
+                    ? "Sự kiện đã diễn ra"
+                    : "Đăng ký sự kiện"}
             </button>
           </div>
         </div>

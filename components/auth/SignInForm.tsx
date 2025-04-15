@@ -76,7 +76,7 @@ export function SignInForm() {
             />
           </div>
           <div className="grid gap-1">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Mật khẩu</Label>
             <Input
               id="password"
               placeholder="••••••••"
@@ -94,7 +94,7 @@ export function SignInForm() {
             {isLoading && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Sign In
+            Đăng nhập
           </Button>
         </div>
       </form>
@@ -104,7 +104,7 @@ export function SignInForm() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
+            Hoặc tiếp tục với
           </span>
         </div>
       </div>
@@ -120,7 +120,7 @@ export function SignInForm() {
         ) : (
           <Icons.google className="mr-2 h-4 w-4" />
         )}
-        <span>Continue with Google</span>
+        <span>Tiếp tục với Google</span>
       </Button>
     </div>
   );

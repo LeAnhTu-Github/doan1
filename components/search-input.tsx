@@ -41,7 +41,7 @@ export const SearchInput = () => {
     if (newTitle !== value) {
       setValue(newTitle);
     }
-  }, [searchParams]);
+  }, [searchParams, value]);
 
   return (
     <div className="relative">

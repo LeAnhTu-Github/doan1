@@ -6,19 +6,24 @@ import { Carousel, List, Spin, Typography } from 'antd';
 import ContestCard from '../ContestCard';
 import MainContest from './MainContest';
 import { Contest } from '@prisma/client';
+import { useSession } from 'next-auth/react';
 
 const { Text } = Typography;
 
 interface ContestWithDetails extends Contest {
   problems: any[];
-  participants: any[];
+  participants: {
+    userId: string;
+  }[];
   submissions: any[];
 }
 
 const ContestSection = () => {
   const [contests, setContests] = useState<ContestWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const carouselRef = useRef<any>(null); // Sử dụng useRef thay vì useState
+  const carouselRef = useRef<any>(null);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   // Fetch contests từ API
   useEffect(() => {
@@ -38,11 +43,16 @@ const ContestSection = () => {
     fetchContests();
   }, []);
 
-  // Hàm xử lý khi click vào item trong list
   const handleContestClick = (index: number) => {
     if (carouselRef.current) {
-      carouselRef.current.goTo(index); // Truy cập ref bằng .current
+      carouselRef.current.goTo(index);
     }
+  };
+
+  // Kiểm tra xem người dùng đã đăng ký cuộc thi chưa
+  const isContestRegistered = (contest: ContestWithDetails) => {
+    if (!userId) return false;
+    return contest.participants.some(participant => participant.userId === userId);
   };
 
   if (loading) {
@@ -61,23 +71,25 @@ const ContestSection = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      {/* Carousel */}
       <Carousel
         autoplay
         dots
-        ref={carouselRef} // Gán ref trực tiếp
+        ref={carouselRef}
         style={{ marginBottom: '40px' }}
       >
         {contests.map((contest) => (
           <div key={contest.id}>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <MainContest contest={contest} />
+              <MainContest 
+                contest={contest}
+                isRegistered={isContestRegistered(contest)}
+                userId={userId}
+              />
             </div>
           </div>
         ))}
       </Carousel>
 
-      {/* List các contest */}
       <List
         grid={{ gutter: 16, column: 3 }}
         dataSource={contests}
@@ -87,7 +99,11 @@ const ContestSection = () => {
               style={{ cursor: 'pointer' }}
               onClick={() => handleContestClick(index)}
             >
-              <ContestCard contest={contest} />
+              <ContestCard 
+                contest={contest}
+                isRegistered={isContestRegistered(contest)}
+                userId={userId}
+              />
             </div>
           </List.Item>
         )}

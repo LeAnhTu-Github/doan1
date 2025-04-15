@@ -151,7 +151,7 @@ model Event {
   userId      String
   title       String
   name        String?
-  date        String?
+  date        DateTime?
   link        String?
   author      String?
   host        String?
@@ -219,19 +219,18 @@ model Contest {
   title        String
   description  String?
   imageUrl     String?
-  startTime    DateTime
-  endTime      DateTime
+  startTime    DateTime            // Giữ lại để thông báo thời gian bắt đầu
+  duration     Int                 @default(60)  // Thời gian làm bài tính bằng phút
+  isActive     Boolean             @default(false) // Trạng thái bật/tắt cuộc thi
   problems     ContestProblem[]
   participants ContestParticipant[]
-  submissions  Submission[] // Liên kết với bài nộp
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-
-  // 🔹 Thêm các trường mới
-  joinCode String? @unique // Mã tham gia cuộc thi
-  qrCode   String? // Lưu URL mã QR hoặc đường dẫn ảnh
-  isPublic Boolean @default(false) // Công khai hay không
-  status   String  @default("upcoming") // Trạng thái cuộc thi (upcoming, ongoing, ended)
+  submissions  Submission[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  joinCode     String?             @unique
+  qrCode       String?
+  isPublic     Boolean             @default(false)
+  status       String              @default("upcoming")
 }
 
 model ContestProblem {
@@ -245,10 +244,11 @@ model ContestProblem {
 model ContestParticipant {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   contestId   String    @db.ObjectId
-  userId      String?   @db.ObjectId        // Tạm thời cho phép null
+  userId      String?   @db.ObjectId
   score       Float     @default(0)
   rank        Int?
-  finishedAt  DateTime?
+  startedAt   DateTime? 
+  finishedAt  DateTime? 
   contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
   user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -257,7 +257,7 @@ model ContestParticipant {
 
 model Submission {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String?  @db.ObjectId        // Tạm thời cho phép null
+  userId      String?  @db.ObjectId       
   contestId   String   @db.ObjectId
   problemId   String   @db.ObjectId
   code        String

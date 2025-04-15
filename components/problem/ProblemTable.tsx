@@ -76,7 +76,7 @@ const ProblemTableClient = ({ initialProblems }: { initialProblems: Problem[] })
                     ? problem.time.toLocaleTimeString()
                     : problem.time
                       ? `${problem.time}:00`
-                      : "N/A"}
+                      : "30 phút"}
                 </td>
                 <td>
                   <button

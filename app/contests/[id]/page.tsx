@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, Home, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import ContestLeaderboard from "@/components/leaderboard/ContestLeaderboard";
 
 // Định nghĩa các trạng thái của cuộc thi
 enum ContestStatus {
@@ -22,56 +23,133 @@ type ContestWithProblems = Contest & {
   problems: { problem: Problem }[];
 };
 
+// Thêm type mới
+type ContestWithProblemsAndCompletion = ContestWithProblems & {
+  isCompleted?: boolean;
+  userScore?: number;
+};
+
+// Thêm state để lưu thời gian đếm ngược
+// const [countdown, setCountdown] = useState({
+//   hours: "00",
+//   minutes: "00",
+//   seconds: "00"
+// });
+
+// Thêm useEffect để cập nhật đếm ngược
+// useEffect(() => {
+//   if (!contest?.startTime) return;
+//   ...
+// }, [contest?.startTime]);
+
 // Component hiển thị khi cuộc thi chưa bắt đầu
 const ContestNotStarted = ({
   contest,
-  timeToStart,
   onStartContest,
   router,
+  endTime,
 }: {
   contest: ContestWithProblems;
-  timeToStart: string;
   onStartContest: () => void;
   router: any;
-}) => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-100">
-    <Card className="w-full max-w-2xl p-8 space-y-6 text-center">
-      <h1 className="text-3xl font-bold text-blue-600">{contest.title}</h1>
-      <div className="space-y-4">
-        <div className="flex items-center justify-center space-x-3 text-2xl font-semibold">
-          <Timer className="w-8 h-8 text-blue-600" />
-          <span>Cuộc thi sắp diễn ra trong:</span>
+  endTime: Date | null;
+}) => {
+  const [countdown, setCountdown] = useState({
+    hours: "00",
+    minutes: "00",
+    seconds: "00"
+  });
+
+  useEffect(() => {
+    if (!contest?.startTime) return;
+
+    const updateCountdown = () => {
+      const now = moment();
+      const start = moment(contest.startTime);
+      const diff = start.diff(now);
+
+      if (diff <= 0) {
+        setCountdown({ hours: "00", minutes: "00", seconds: "00" });
+        return;
+      }
+
+      const duration = moment.duration(diff);
+      setCountdown({
+        hours: String(Math.floor(duration.asHours())).padStart(2, "0"),
+        minutes: String(duration.minutes()).padStart(2, "0"),
+        seconds: String(duration.seconds()).padStart(2, "0")
+      });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [contest?.startTime]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Card className="w-full max-w-2xl p-8 space-y-6 text-center">
+        <h1 className="text-3xl font-bold text-blue-600">{contest.title}</h1>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center space-x-3 text-2xl font-semibold">
+            <Timer className="w-8 h-8 text-blue-600" />
+            <span>Cuộc thi sắp diễn ra trong:</span>
+          </div>
+          <div className="flex justify-center items-center space-x-4">
+            <div className="flex flex-col items-center">
+              <div className="text-4xl font-bold text-blue-600 bg-blue-50 rounded-lg p-4 min-w-[80px]">
+                {countdown.hours}
+              </div>
+              <span className="text-sm text-gray-600 mt-2">Giờ</span>
+            </div>
+            <div className="text-4xl font-bold text-blue-600">:</div>
+            <div className="flex flex-col items-center">
+              <div className="text-4xl font-bold text-blue-600 bg-blue-50 rounded-lg p-4 min-w-[80px]">
+                {countdown.minutes}
+              </div>
+              <span className="text-sm text-gray-600 mt-2">Phút</span>
+            </div>
+            <div className="text-4xl font-bold text-blue-600">:</div>
+            <div className="flex flex-col items-center">
+              <div className="text-4xl font-bold text-blue-600 bg-blue-50 rounded-lg p-4 min-w-[80px]">
+                {countdown.seconds}
+              </div>
+              <span className="text-sm text-gray-600 mt-2">Giây</span>
+            </div>
+          </div>
         </div>
-        <div className="text-4xl font-bold text-blue-600">{timeToStart}</div>
-      </div>
-      <div className="space-y-2">
-        <p className="text-gray-600">
-          Thời gian bắt đầu: {moment(contest.startTime).format("HH:mm DD/MM/YYYY")}
-        </p>
-        <p className="text-gray-600">
-          Thời gian kết thúc: {moment(contest.endTime).format("HH:mm DD/MM/YYYY")}
-        </p>
-      </div>
-      <div className="flex justify-center space-x-4">
-        <Button
-          onClick={() => router.push("/")}
-          variant="outline"
-          className="px-8 py-3 rounded-lg text-lg"
-        >
-          Về trang chủ
-        </Button>
-        {moment().isAfter(moment(contest.startTime)) && (
+        <div className="space-y-2">
+          <p className="text-gray-600">
+            Thời gian bắt đầu: {moment(contest.startTime).format("HH:mm DD/MM/YYYY")}
+          </p>
+          <p className="text-gray-600">
+            Thời gian kết thúc: {moment(endTime).format("HH:mm DD/MM/YYYY")}
+          </p>
+          <p className="text-gray-600">
+            Thời gian làm bài: {contest.duration} phút
+          </p>
+        </div>
+        <div className="flex justify-center space-x-4">
           <Button
-            onClick={onStartContest}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg"
+            onClick={() => router.push("/")}
+            variant="outline"
+            className="px-8 py-3 rounded-lg text-lg"
           >
-            Bắt đầu làm bài
+            Về trang chủ
           </Button>
-        )}
-      </div>
-    </Card>
-  </div>
-);
+          {moment().isAfter(moment(contest.startTime)) && (
+            <Button
+              onClick={onStartContest}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg"
+            >
+              Bắt đầu làm bài
+            </Button>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};
 
 // Component hiển thị khi cuộc thi đã kết thúc
 const ContestEnded = ({ contest }: { contest: ContestWithProblems }) => (
@@ -98,7 +176,7 @@ const ContestEnded = ({ contest }: { contest: ContestWithProblems }) => (
 export default function ContestDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [contest, setContest] = useState<ContestWithProblems | null>(null);
+  const [contest, setContest] = useState<ContestWithProblemsAndCompletion | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [timeToStart, setTimeToStart] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -110,6 +188,10 @@ export default function ContestDetailPage() {
   const [isSubmittingAll, setIsSubmittingAll] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
+  const [hasDeactivated, setHasDeactivated] = useState(false);
+  const [isLoadingFinalResults, setIsLoadingFinalResults] = useState(false);
 
   // Fetch contest data
   useEffect(() => {
@@ -123,7 +205,13 @@ export default function ContestDetailPage() {
 
         const data = await response.json();
         setContest(data);
-        if (data.problems.length > 0) {
+        
+        // Nếu contest đã hoàn thành, set các state tương ứng
+        if (data.isCompleted) {
+          setContestStatus(ContestStatus.ENDED);
+          setShowLeaderboard(true);
+          setFinalScore(data.userScore || 0);
+        } else if (data.problems.length > 0) {
           setSelectedProblemId(data.problems[0].problem.id);
         }
       } catch (error) {
@@ -139,27 +227,48 @@ export default function ContestDetailPage() {
     return () => controller.abort();
   }, [id]);
 
-  // Calculate contest status and time
+  // Kiểm tra thời gian và trạng thái
   useEffect(() => {
-    if (!contest?.startTime || !contest?.endTime) return;
+    if (!contest?.startTime || !contest?.duration) return;
 
     const updateTime = () => {
       const now = moment();
-      const startTime = moment(contest.startTime);
-      const endTime = moment(contest.endTime);
+      const contestStart = moment(contest.startTime);
+      const contestEnd = moment(contest.startTime).add(contest.duration, 'minutes');
 
-      // Xác định trạng thái cuộc thi
-      if (now.isBefore(startTime)) {
-        setContestStatus(ContestStatus.NOT_STARTED);
-        const duration = moment.duration(startTime.diff(now));
-        setTimeToStart(
-          `${String(Math.floor(duration.asHours())).padStart(2, "0")}:${String(duration.minutes()).padStart(2, "0")}:${String(duration.seconds()).padStart(2, "0")}`
-        );
-      } else if (now.isAfter(endTime)) {
+      // Kiểm tra nếu contest đã kết thúc
+      if (now.isAfter(contestEnd)) {
+        // Chỉ deactivate một lần
+        if (contest.isActive && !hasDeactivated) {
+          setHasDeactivated(true);
+          fetch(`/api/contests/${contest.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              isActive: false,
+            }),
+          });
+          
+          if (contestStatus !== ContestStatus.ENDED) {
+            submitAllProblems();
+          }
+        }
         setContestStatus(ContestStatus.ENDED);
-      } else {
+        setShowLeaderboard(true);
+        return; // Thoát khỏi hàm updateTime nếu contest đã kết thúc
+      }
+
+      // Logic cho contest đang diễn ra hoặc chưa bắt đầu
+      if (!contest.isActive) {
+        if (contestStatus === ContestStatus.IN_PROGRESS) {
+          submitAllProblems();
+        }
+        setContestStatus(ContestStatus.NOT_STARTED);
+      } else if (contest.isActive && now.isAfter(contestStart)) {
         setContestStatus(ContestStatus.IN_PROGRESS);
-        const duration = moment.duration(endTime.diff(now));
+        const duration = moment.duration(contestEnd.diff(now));
         setTimeLeft(
           `${String(Math.floor(duration.asHours())).padStart(2, "0")}:${String(duration.minutes()).padStart(2, "0")}:${String(duration.seconds()).padStart(2, "0")}`
         );
@@ -169,7 +278,7 @@ export default function ContestDetailPage() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [contest]);
+  }, [contest, contestStatus, hasDeactivated]);
 
   // Handle problem selection
   const handleProblemSelect = (problemId: string) => {
@@ -192,107 +301,179 @@ export default function ContestDetailPage() {
     return `${currentTotal}/${maxPossibleScore}`;
   };
 
-  // Thêm hàm xử lý kết thúc bài thi
+  // Tạo một hàm mới để xử lý việc nộp bài thi
+  const submitAllProblems = async () => {
+    if (!contest) return;
+    
+    setIsSubmittingAll(true);
+    setIsLoadingFinalResults(true);
+    
+    try {
+      // Nộp tất cả các bài thi
+      const problems = contest.problems.map(p => p.problem.id);
+      setSubmissionProgress({ current: 0, total: problems.length });
+      
+      // Tạo một mảng các promise để submit tất cả các problem
+      const submissionPromises = problems.map(async (problemId, index) => {
+        try {
+          const storedCode = localStorage.getItem(`code-${problemId}-javascript`);
+          if (!storedCode) {
+            setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            return;
+          }
+          
+          const userCode = JSON.parse(storedCode);
+          
+          const response = await fetch(`/api/contests/${id}/submissions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              problemId: problemId,
+              code: userCode,
+              language: 'javascript',
+            }),
+          });
+          
+          if (!response.ok) {
+            console.error(`Failed to submit problem ${problemId}`);
+            setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            return;
+          }
+          
+          const data = await response.json();
+          handleUpdateScore(problemId, data.results.score);
+        } catch (error) {
+          console.error(`Error submitting problem ${problemId}:`, error);
+        } finally {
+          setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
+        }
+      });
+      
+      // Chờ tất cả các submission hoàn thành
+      await Promise.all(submissionPromises);
+      
+      // Tính toán điểm cuối cùng từ problemScores
+      const calculatedFinalScore = Object.values(problemScores).reduce((sum, score) => sum + score, 0);
+      setFinalScore(calculatedFinalScore);
+
+      // Đợi thêm 1 giây để đảm bảo server đã cập nhật điểm
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Hiển thị thông báo thành công
+      setShowCompletionMessage(true);
+      toast.success(`Đã nộp xong tất cả bài thi! Điểm của bạn: ${calculatedFinalScore}/${contest.problems.length * 100}`, {
+        duration: 3000,
+      });
+
+      // Chuyển trạng thái và hiển thị leaderboard
+      setContestStatus(ContestStatus.ENDED);
+      setShowLeaderboard(true);
+
+    } catch (error) {
+      console.error("Error ending contest:", error);
+      toast.error("Có lỗi xảy ra khi kết thúc bài thi");
+    } finally {
+      setIsSubmittingAll(false);
+      setShowCompletionMessage(false);
+      setIsLoadingFinalResults(false);
+    }
+  };
+
+  // Sửa lại hàm handleEnd cho trường hợp người dùng chủ động kết thúc
   const handleEnd = async () => {
     if (!contest) return;
     
-    // Hiển thị thông báo xác nhận một lần duy nhất
     if (!window.confirm('Bạn có chắc chắn muốn kết thúc bài thi? Tất cả các bài chưa nộp sẽ được tự động nộp. Hành động này không thể hoàn tác.')) {
       return;
     }
     
-    setIsSubmittingAll(true);
-    
-    // Lấy tất cả các problem trong contest
-    const problems = contest.problems.map(p => p.problem.id);
-    setSubmissionProgress({ current: 0, total: problems.length });
-    
-    // Tạo một mảng các promise để submit tất cả các problem
-    const submissionPromises = problems.map(async (problemId, index) => {
-      try {
-        // Lấy code từ localStorage
-        const storedCode = localStorage.getItem(`code-${problemId}-javascript`);
-        if (!storedCode) {
-          setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
-          return; // Bỏ qua nếu không có code
-        }
-        
-        const userCode = JSON.parse(storedCode);
-        
-        // Submit code
-        const response = await fetch(`/api/contests/${id}/submissions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            problemId: problemId,
-            code: userCode,
-            language: 'javascript', // Sử dụng ngôn ngữ mặc định
-          }),
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to submit problem ${problemId}`);
-          setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
-          return;
-        }
-        
-        const data = await response.json();
-        // Cập nhật điểm số
-        handleUpdateScore(problemId, data.results.score);
-        
-      } catch (error) {
-        console.error(`Error submitting problem ${problemId}:`, error);
-      } finally {
-        // Cập nhật tiến trình
-        setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
-      }
-    });
-    
-    // Chờ tất cả các submission hoàn thành
-    await Promise.all(submissionPromises);
-    
-    // Hiển thị thông báo hoàn thành
-    setShowCompletionMessage(true);
-    
-    // Tính toán điểm cuối cùng
-    const finalScore = Object.values(problemScores).reduce((sum, score) => sum + score, 0);
-    const maxPossibleScore = contest.problems.length * 100;
-    
-    // Hiển thị toast thông báo
-    toast.success(`Đã nộp xong tất cả bài thi! Điểm của bạn: ${finalScore}/${maxPossibleScore}`, {
-      duration: 3000,
-    });
-    
-    // Đợi 2 giây trước khi chuyển hướng
-    setTimeout(() => {
-      setIsSubmittingAll(false);
-      setShowCompletionMessage(false);
-      router.push('/');
-    }, 2000);
+    await submitAllProblems();
+  };
+
+  // Xử lý bắt đầu làm bài
+  const handleStartContest = async () => {
+    try {
+      const response = await fetch(`/api/contests/${id}/start`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) throw new Error('Failed to start contest');
+      
+      const data = await response.json();
+      setContestStatus(ContestStatus.IN_PROGRESS);
+    } catch (error) {
+      toast.error("Không thể bắt đầu bài thi");
+    }
   };
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
   if (!contest) return <div className="text-center py-10">No contest found</div>;
 
-  // Render based on contest status
+  // Kiểm tra nếu contest đã kết thúc (dựa vào thời gian), luôn hiển thị leaderboard
+  const now = moment();
+  const contestEnd = moment(contest.startTime).add(contest.duration, 'minutes');
+  if (now.isAfter(contestEnd)) {
+    if (isLoadingFinalResults) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+          <div className="bg-white p-8 rounded-lg shadow-md text-center">
+            <div className="mb-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Đang cập nhật kết quả...</h2>
+            <p className="text-gray-600">Vui lòng đợi trong giây lát</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <ContestLeaderboard 
+        contestId={id as string}
+        currentUserScore={finalScore}
+      />
+    );
+  }
+
+  // Kiểm tra trạng thái kích hoạt chỉ khi contest chưa kết thúc
+  if (!contest.isActive) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Card className="w-full max-w-2xl p-8 space-y-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-800">Cuộc thi chưa được kích hoạt</h1>
+          <p className="text-gray-600">Vui lòng đợi giáo viên kích hoạt cuộc thi</p>
+          <div className="text-sm text-gray-500">
+            Thời gian thi: {moment(contest?.startTime).format("HH:mm DD/MM/YYYY")} - {contestEnd.format("HH:mm DD/MM/YYYY")}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Phần còn lại của component cho trạng thái IN_PROGRESS
   switch (contestStatus) {
     case ContestStatus.NOT_STARTED:
       return (
         <ContestNotStarted
           contest={contest}
-          timeToStart={timeToStart}
-          onStartContest={() => setContestStatus(ContestStatus.IN_PROGRESS)}
+          onStartContest={handleStartContest}
           router={router}
+          endTime={contestEnd.toDate()}
         />
       );
 
-    case ContestStatus.ENDED:
-      return <ContestEnded contest={contest} />;
-
     case ContestStatus.IN_PROGRESS:
+      if (showLeaderboard) {
+        return (
+          <ContestLeaderboard 
+            contestId={id as string}
+            currentUserScore={finalScore}
+          />
+        );
+      }
       return (
         <div className="flex min-h-screen bg-gray-100 relative">
           {/* Toggle Sidebar Button */}
@@ -365,6 +546,15 @@ export default function ContestDetailPage() {
                 <span className="text-lg font-semibold">Tổng điểm:</span>
                 <span className="text-2xl font-bold text-blue-600">{calculateTotalScore()}</span>
               </div>
+              
+              <div className="flex items-center space-x-2">
+                <Timer className="w-5 h-5 text-blue-600" />
+                <span className="text-lg font-semibold">Thời gian còn lại:</span>
+                <span className="text-xl font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                  {timeLeft}
+                </span>
+              </div>
+
               <button
                 onClick={handleEnd}
                 disabled={isSubmittingAll}
@@ -410,6 +600,14 @@ export default function ContestDetailPage() {
             </div>
           </div>
         </div>
+      );
+
+    case ContestStatus.ENDED:
+      return (
+        <ContestLeaderboard 
+          contestId={id as string}
+          currentUserScore={finalScore}
+        />
       );
   }
 }

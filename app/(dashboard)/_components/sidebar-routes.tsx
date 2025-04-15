@@ -7,6 +7,7 @@ import {
   CalendarRange,
   Home,
   BookMarked,
+  File,
   ScrollText,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,11 @@ const teacherRoutes = [
     icon: BookMarked,
     label: "Cuộc thi",
     href: "/teacher/contests",
+  },
+  {
+    icon: File,
+    label: "Bài tập",
+    href: "/teacher/problems",
   },
   {
     icon: BarChart,

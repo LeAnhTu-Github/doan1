@@ -106,7 +106,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
               <AuthorForm initialData={event} courseId={event.id} />
               <LinkForm initialData={event} courseId={event.id} />
               <AddressForm initialData={event} courseId={event.id} />
-              <DateForm initialData={event} courseId={event.id} />
+              {/* <DateForm initialData={event} eventId={event.id} /> */}
             </div>
             <div></div>
           </div>

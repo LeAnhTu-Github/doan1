@@ -1,48 +1,107 @@
 "use client";
-import { Button, Card } from "antd";
+import { Button, Card, message } from "antd";
 import Image from "next/image";
 import { Contest } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { EyeOutlined } from '@ant-design/icons';
 interface MainContestProps {
   contest: Contest;
+  isRegistered?: boolean;
+  userId?: string;
 }
 
-const MainContest = ({ contest }: MainContestProps) => {
+const MainContest = ({ contest, isRegistered: initialIsRegistered = false, userId }: MainContestProps) => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(initialIsRegistered);
+
+  const handleRegister = async () => {
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/contests/${contest.id}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Đăng ký thất bại');
+      }
+
+      message.success('Đăng ký thành công!');
+      setIsRegistered(true);
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi đăng ký');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinContest = () => {
+    router.push(`/contests/${contest.id}`);
+  };
+
+  const primaryButtonStyle = {
+    width: "90px",
+    height: "40px",
+    backgroundColor: "#1677ff",
+    borderColor: "#1677ff",
+    color: "#fff",
+  };
+  const viewButtonStyle = {
+    width: "120px",
+    height: "40px",
+    backgroundColor: "#1677ff",
+    borderColor: "#1677ff",
+    color: "#fff",
+  };
+
+  const joinButtonStyle = {
+    width: "120px",
+    height: "40px",
+    backgroundColor: "#fff",
+    borderColor: "#d9d9d9",
+    color: "#000",
+  };
+
   return (
     <Card
       hoverable
-      style={{ width: "100%", maxWidth: "100%", padding: 0 }} // Đảm bảo card full width, không padding
-      bodyStyle={{ padding: 0 }} // Xóa padding mặc định của body Card
+      style={{ width: "100%", maxWidth: "100%", padding: 0 }}
+      bodyStyle={{ padding: 0 }}
     >
       <div style={{ position: "relative" }}>
         <Image
-          src={
-            contest.imageUrl ||
-            ""
-          }
+          src={contest.imageUrl || "/default-contest-image.jpg"}
           alt={contest.title}
-          width={1920} 
-          height={1280} 
+          width={1920}
+          height={1280}
           quality={100}
-          style={{ width: "100%", height: "600px", objectFit: "cover" }} 
+          style={{ width: "100%", height: "600px", objectFit: "cover" }}
         />
-        
+
         <h2
           style={{
-            position: "absolute", 
-            top: "20px", 
+            position: "absolute",
+            top: "20px",
             left: "30px",
             fontSize: "32px",
             fontWeight: "bold",
-            color: "#fff", 
-            textAlign: "right", 
-            margin: 0, 
+            color: "#fff",
+            textAlign: "right",
+            margin: 0,
           }}
         >
           {contest.title}
         </h2>
-        {/* Div chứa nút, giữ ở giữa */}
+
         <div
           style={{
             position: "absolute",
@@ -51,37 +110,40 @@ const MainContest = ({ contest }: MainContestProps) => {
             textAlign: "center",
           }}
         >
-          <div
-            style={{ display: "flex", justifyContent: "center", gap: "16px" }}
-          >
+          <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
             <Button
-              style={{
-                width: "90px",
-                height: "40px",
-                backgroundColor: "#1677ff",
-                borderColor: "#1677ff",
-                color: "#fff",
-              }}
-              onClick={() => router.push(`/contests/${contest.id}`)}
+              style={primaryButtonStyle}
+              onClick={() => router.push(`/contests/${contest.id}/details`)}
             >
-              Xem
+              Xem thêm
             </Button>
-            {contest.status === "upcoming" ? (
+            {isRegistered ? (
               <Button
                 size="large"
-                style={{ backgroundColor: "#fff", borderColor: "#d9d9d9" }}
+                style={joinButtonStyle}
+                onClick={handleJoinContest}
               >
-                Đăng ký
+                Tham gia
               </Button>
             ) : (
               <Button
                 size="large"
-                style={{ backgroundColor: "#fff", borderColor: "#d9d9d9" }}
-                onClick={() => router.push(`/contests/${contest.id}`)}
+                style={joinButtonStyle}
+                onClick={handleRegister}
+                loading={isLoading}
               >
-                Tham gia
+                Đăng ký
               </Button>
+              
             )}
+            <Button
+                size="large"
+                icon={<EyeOutlined />}
+                style={viewButtonStyle}
+                onClick={() => router.push(`/contests/${contest.id}/view`)}
+              >
+                Theo dõi
+              </Button>
           </div>
         </div>
       </div>

@@ -33,6 +33,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,17 +44,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUpload } from "@/components/file-upload";
+import Image from "next/image";
 
 const formSchema = z.object({
   title: z.string().min(1, {
     message: "Tiêu đề là bắt buộc",
   }),
+  imageUrl: z.string().optional(),
   description: z.string().optional(),
   startTime: z.string().min(1, {
     message: "Thời gian bắt đầu là bắt buộc",
   }),
-  endTime: z.string().min(1, {
-    message: "Thời gian kết thúc là bắt buộc",
+  duration: z.number().min(1, {
+    message: "Thời lượng là bắt buộc",
   }),
   status: z.enum(["upcoming", "ongoing", "ended"]),
   isPublic: z.boolean(),
@@ -79,16 +83,18 @@ export const ContestForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData.title || "",
+      imageUrl: initialData.imageUrl || "",
       description: initialData.description || "",
-      startTime: initialData.startTime ? new Date(initialData.startTime).toISOString().slice(0, 16) : "",
-      endTime: initialData.endTime ? new Date(initialData.endTime).toISOString().slice(0, 16) : "",
+      startTime: initialData.startTime 
+        ? new Date(initialData.startTime).toLocaleString('sv-SE').slice(0, 16) 
+        : "",
+      duration: initialData.duration || 60,
       status: initialData.status as "upcoming" | "ongoing" | "ended",
       isPublic: initialData.isPublic,
       joinCode: initialData.joinCode || "",
       problems: initialData.problems ? initialData.problems.map(p => p.problemId) : [],
     },
   });
-
   useEffect(() => {
     const fetchAvailableProblems = async () => {
       try {
@@ -107,19 +113,12 @@ export const ContestForm = ({
     fetchAvailableProblems();
   }, []);
 
-  // Debug initial data
-  useEffect(() => {
-    console.log("Initial contest data:", initialData);
-    console.log("Initial problems:", initialData.problems);
-  }, [initialData]);
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
       
-      console.log("Form values:", values);
-      console.log("Selected problems:", values.problems);
-
+      const startTimeUTC = new Date(values.startTime);
+      
       const response = await fetch(`/api/contests/${initialData.id}`, {
         method: "PUT",
         headers: {
@@ -127,8 +126,9 @@ export const ContestForm = ({
         },
         body: JSON.stringify({
           ...values,
-          startTime: new Date(values.startTime).toISOString(),
-          endTime: new Date(values.endTime).toISOString(),
+          imageUrl: values.imageUrl,
+          startTime: startTimeUTC.toISOString(),
+          duration: values.duration,
           problemIds: values.problems,
         }),
       });
@@ -137,8 +137,6 @@ export const ContestForm = ({
         throw new Error("Cập nhật thất bại");
       }
 
-      const data = await response.json();
-      console.log("Update response:", data);
       router.refresh();
       router.push(`/teacher/contests/${initialData.id}/edit`);
       toast.success("Cập nhật thành công");
@@ -166,6 +164,51 @@ export const ContestForm = ({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ảnh cuộc thi</FormLabel>
+              <FormControl>
+                <div className="flex flex-col gap-4">
+                  {field.value ? (
+                    <div className="relative aspect-video mt-2 max-h-[200px]">
+                      <Image
+                        alt="Contest thumbnail"
+                        fill
+                        className="object-cover rounded-md"
+                        src={field.value}
+                      />
+                      <Button
+                        onClick={() => field.onChange("")}
+                        variant="destructive"
+                        type="button"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                      >
+                        Xóa ảnh
+                      </Button>
+                    </div>
+                  ) : (
+                    <FileUpload
+                      endpoint="courseImage"
+                      onChange={(url) => {
+                        if (url) {
+                          field.onChange(url);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              </FormControl>
+              <FormDescription>
+                Tải lên ảnh đại diện cho cuộc thi (tỷ lệ khuyến nghị 16:9)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -207,15 +250,17 @@ export const ContestForm = ({
           />
           <FormField
             control={form.control}
-            name="endTime"
+            name="duration"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Thời gian kết thúc</FormLabel>
+                <FormLabel>Thời lượng (phút)</FormLabel>
                 <FormControl>
                   <Input
-                    type="datetime-local"
+                    type="number"
+                    min="1"
                     disabled={isLoading}
                     {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -366,6 +411,39 @@ export const ContestForm = ({
             type="submit"
           >
             Lưu thay đổi
+          </Button>
+          <Button
+            disabled={isLoading}
+            variant={initialData.isActive ? "destructive" : "default"}
+            type="button"
+            onClick={async () => {
+              try {
+                setIsLoading(true);
+                const response = await fetch(`/api/contests/${initialData.id}`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    isActive: !initialData.isActive,
+                  }),
+                });
+
+                if (!response.ok) throw new Error("Không thể cập nhật trạng thái");
+                
+                toast.success(initialData.isActive ? 
+                  "Đã dừng kích hoạt cuộc thi" : 
+                  "Đã kích hoạt cuộc thi"
+                );
+                router.refresh();
+              } catch (error) {
+                toast.error("Không thể cập nhật trạng thái cuộc thi");
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+          >
+            {initialData.isActive ? "Dừng kích hoạt" : "Kích hoạt"}
           </Button>
         </div>
       </form>
