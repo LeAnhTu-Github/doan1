@@ -67,14 +67,14 @@ export const ChapterDescriptionForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter description
+        Mô tả chương
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Hủy bỏ</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+                  Chỉnh sửa mô tả
             </>
           )}
         </Button>
@@ -84,11 +84,11 @@ export const ChapterDescriptionForm = ({
           "text-sm mt-2",
           !initialData.description && "text-slate-500 italic"
         )}>
-          {!initialData.description && "No description"}
+          {!initialData.description && "Không có mô tả"}
           {initialData.description && (
             <Textarea
               disabled
-              value={initialData.description || "No description"}
+              value={initialData.description || "Không có mô tả"}
               className="text-sm mt-2 bg-transparent border-none focus:ring-0 text-slate-500 italic"
             />
           )}
@@ -108,7 +108,7 @@ export const ChapterDescriptionForm = ({
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="e.g. 'This course is about...'"
+                      placeholder="Ví dụ: 'Chương này là về...'"
                       {...field}
                     />
                   </FormControl>
@@ -121,7 +121,7 @@ export const ChapterDescriptionForm = ({
                 disabled={!isValid || isSubmitting}
                 type="submit"
               >
-                Save
+                Lưu
               </Button>
             </div>
           </form>

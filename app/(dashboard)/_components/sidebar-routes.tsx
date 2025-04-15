@@ -38,6 +38,11 @@ const guestRoutes = [
 
 const teacherRoutes = [
   {
+    icon: BarChart,
+    label: "Người dùng",
+    href: "/teacher/user",
+  },
+  {
     icon: BookMarked,
     label: "Cuộc thi",
     href: "/teacher/contests",
@@ -46,11 +51,6 @@ const teacherRoutes = [
     icon: File,
     label: "Bài tập",
     href: "/teacher/problems",
-  },
-  {
-    icon: BarChart,
-    label: "Người dùng",
-    href: "/teacher/user",
   },
   {
     icon: List,

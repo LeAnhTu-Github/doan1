@@ -68,14 +68,14 @@ export const CategoryForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course category
+        Chủ đề khóa học
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Hủy bỏ</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit category
+              Chỉnh sửa chủ đề
             </>
           )}
         </Button>
@@ -101,8 +101,9 @@ export const CategoryForm = ({
                 <FormItem>
                   <FormControl>
                     <Combobox
-                      options={...options}
+                      options={options}
                       {...field}
+                      onChange={(value) => field.onChange(value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -114,7 +115,7 @@ export const CategoryForm = ({
                 disabled={!isValid || isSubmitting}
                 type="submit"
               >
-                Save
+                Lưu
               </Button>
             </div>
           </form>

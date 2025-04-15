@@ -30,6 +30,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import Avatar from "@/components/Avatar";
 
 interface LeaderboardEntry {
   id: string;
@@ -67,13 +68,13 @@ const TopThreeCard = ({ entry, totalProblems }: { entry: LeaderboardEntry; total
   };
 
   const medal = medals[entry.rank as keyof typeof medals];
-
+  
   return (
     <Card className={`p-6 flex flex-col items-center justify-center gap-4 transform hover:scale-105 transition-transform duration-200 ${entry.rank === 1 ? 'bg-gradient-to-br from-yellow-100 to-yellow-50' : ''}`}>
       <div className="relative">
         <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg relative">
           <Image
-            src={entry.user?.image || "/placeholder.png"}
+            src={entry.user?.image || "/images/placeholder.jpg"}
             alt={entry.user?.name || "User"}
             fill
             sizes="80px"
@@ -109,12 +110,10 @@ const UserCell = ({ user, rank }: { user: LeaderboardEntry['user']; rank: number
   return (
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 relative">
-        <Image
-          src={user?.image || "/placeholder.png"}
-          alt={user?.name || "User"}
-          fill
-          sizes="40px"
-          className="object-cover"
+        <Avatar 
+          src={user?.image} 
+          width={40}
+          height={40}
         />
       </div>
       <div className="flex flex-col">

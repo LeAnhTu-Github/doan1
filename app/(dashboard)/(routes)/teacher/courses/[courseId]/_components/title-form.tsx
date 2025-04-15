@@ -60,14 +60,14 @@ export const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course title
+        Tên khóa học
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Hủy bỏ</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit title
+              Chỉnh sửa tên
             </>
           )}
         </Button>
@@ -97,7 +97,7 @@ export const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
             />
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Lưu
               </Button>
             </div>
           </form>

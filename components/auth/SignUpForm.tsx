@@ -54,7 +54,7 @@ export function SignUpForm() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
@@ -131,7 +131,7 @@ export function SignUpForm() {
         variant="outline"
         type="button"
         disabled={isLoading}
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        onClick={() => signIn("google", { callbackUrl: "/" })}
       >
         {isLoading ? (
           <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />

@@ -29,7 +29,7 @@ const SectionInfo = ({ currentUser }: SidebarProps) => {
             Số khoá học đã tham gia
           </p>
           <p className="text-[#06080F] text-2xl font-semibold pt-2">
-            {currentUser?.courses?.length || 0} {/* Giả sử có field courses */}
+            {currentUser?.courses?.length || 3} {/* Giả sử có field courses */}
           </p>
         </div>
         <div className="w-1/3 h-full bg-[url('/images/nav2.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2 flex flex-col">
@@ -37,7 +37,7 @@ const SectionInfo = ({ currentUser }: SidebarProps) => {
             Số sự kiện đang đăng kí
           </p>
           <p className="text-[#06080F] text-2xl font-semibold pt-2">
-            {currentUser?.events?.length || 0} {/* Giả sử có field events */}
+            {currentUser?.events?.length || 8} {/* Giả sử có field events */}
           </p>
         </div>
         <div className="w-1/3 h-full bg-[url('/images/nav3.jpg')] bg-auto bg-center bg-repeat rounded-[20px] p-2 flex flex-col">
@@ -45,7 +45,7 @@ const SectionInfo = ({ currentUser }: SidebarProps) => {
             Bài tập đã làm
           </p>
           <p className="text-[#06080F] text-2xl font-semibold pt-2">
-            {currentUser?.problems?.length || 0} {/* Giả sử có field tests */}
+            {currentUser?.problems?.length || 2} {/* Giả sử có field tests */}
           </p>
         </div>
       </div>

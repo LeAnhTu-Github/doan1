@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 // Định nghĩa các route không cần bảo vệ
 const publicRoutes = ['/sign-in', '/sign-up'];
 // Định nghĩa các route cần bảo vệ
-const protectedRoutes = ['/'];
+const protectedRoutes = ['/teacher/*'];
 
 const DEFAULT_LOGIN_REDIRECT = "/"; // Trang mặc định sau khi đăng nhập
 
@@ -18,19 +18,19 @@ export async function middleware(request: NextRequest) {
   console.log("Path:", request.nextUrl.pathname);
   console.log("Token exists:", !!token);
   const { pathname } = request.nextUrl;
-  const isLoggedIn = !!token;
+  // const isLoggedIn = !!token;
   
-  // Nếu đã đăng nhập và đang ở trang auth (sign-in, sign-up)
-  if (isLoggedIn && publicRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, request.url));
-  }
+  // // Nếu đã đăng nhập và đang ở trang auth (sign-in, sign-up)
+  // if (isLoggedIn && publicRoutes.includes(pathname)) {
+  //   return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, request.url));
+  // }
 
-  // Nếu chưa đăng nhập và cố truy cập route khác ngoài public routes
-  if (!isLoggedIn && !publicRoutes.includes(pathname) && pathname !== '/') {
-    const signInUrl = new URL('/sign-in', request.url);
-    signInUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(signInUrl);
-  }
+  // // Nếu chưa đăng nhập và cố truy cập route khác ngoài public routes
+  // if (!isLoggedIn && !publicRoutes.includes(pathname) && pathname !== '/') {
+  //   const signInUrl = new URL('/sign-in', request.url);
+  //   signInUrl.searchParams.set('callbackUrl', pathname);
+  //   return NextResponse.redirect(signInUrl);
+  // }
 
   return NextResponse.next();
 }

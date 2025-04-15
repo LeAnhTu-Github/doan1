@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import moment from "moment";
+import "moment/locale/vi"; // Import Vietnamese locale
 import {
   ArrowUpDown,
   MoreHorizontal,
@@ -92,6 +94,7 @@ export const columns: ColumnDef<Event>[] = [
         </Button>
       );
     },
+    size: 400,
   },
   {
     accessorKey: "date",
@@ -106,16 +109,13 @@ export const columns: ColumnDef<Event>[] = [
         </Button>
       );
     },
+    size: 150,
     cell: ({ row }) => {
       const date = row.getValue("date");
-      if (!date || typeof date !== 'string') return "Chưa có ngày";
-      return new Date(date).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+      if (!date) return "Chưa có ngày";
+      
+      moment.locale('vi');
+      return moment(date).format('DD/MM/YYYY HH:mm');
     }
   },
   {
@@ -131,6 +131,7 @@ export const columns: ColumnDef<Event>[] = [
         </Button>
       );
     },
+    size: 120,
     cell: ({ row }) => {
       const isPublished = row.getValue("isPublished") || false;
 
@@ -153,6 +154,7 @@ export const columns: ColumnDef<Event>[] = [
         </Button>
       );
     },
+    size: 100,
     cell: CeilData,
   },
 ];

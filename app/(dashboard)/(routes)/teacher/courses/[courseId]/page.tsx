@@ -98,8 +98,9 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               <h2 className="text-xl">Chỉnh sửa khoá học của bạn</h2>
             </div>
             <TitleForm initialData={course} courseId={course.id} />
-            <DescriptionForm initialData={course} courseId={course.id} />
             <ImageForm initialData={course} courseId={course.id} />
+            <DescriptionForm initialData={course} courseId={course.id} />
+            
             <CategoryForm
               initialData={course}
               courseId={course.id}

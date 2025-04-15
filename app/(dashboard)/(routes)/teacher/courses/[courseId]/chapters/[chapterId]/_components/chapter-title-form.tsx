@@ -63,14 +63,14 @@ export const ChapterTitleForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter title
+        Tên chương
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Hủy bỏ</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit title
+                Chỉnh sửa tên
             </>
           )}
         </Button>
@@ -94,7 +94,7 @@ export const ChapterTitleForm = ({
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
-                      placeholder="e.g. 'Introduction to the course'"
+                      placeholder="Ví dụ: 'Giới thiệu khóa học'"
                       {...field}
                     />
                   </FormControl>
@@ -107,7 +107,7 @@ export const ChapterTitleForm = ({
                 disabled={!isValid || isSubmitting}
                 type="submit"
               >
-                Save
+                Lưu
               </Button>
             </div>
           </form>

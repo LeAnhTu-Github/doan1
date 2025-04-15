@@ -23,7 +23,7 @@ const ContestCard = ({ contest, isRegistered: initialIsRegistered = false, userI
 
   const handleRegister = async () => {
     if (!userId) {
-      router.push('/login');
+      router.push('/sign-in');
       return;
     }
 
@@ -100,7 +100,7 @@ const ContestCard = ({ contest, isRegistered: initialIsRegistered = false, userI
           )}
           <Button 
             size="middle"
-            onClick={() => router.push(`/contests/${contest.id}/details`)}
+            onClick={() => router.push(`/eventPage`)}
           >
             Xem thêm
           </Button>

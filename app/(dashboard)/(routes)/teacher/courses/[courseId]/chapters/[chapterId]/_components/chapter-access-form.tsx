@@ -68,14 +68,14 @@ export const ChapterAccessForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter access
+        Truy cập chương
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Edit access
+                Chỉnh sửa truy cập
             </>
           )}
         </Button>
@@ -85,10 +85,10 @@ export const ChapterAccessForm = ({
           "text-sm mt-2",
           !initialData.isFree && "text-slate-500 italic"
         )}>
-          {initialData.isFree ? (
-            <>This chapter is free for preview.</>
+          {initialData.isFree ? ( 
+            <>Chương này là miễn phí.</>
           ) : (
-            <>This chapter is not free.</>
+            <>Chương này không miễn phí.</>
           )}
         </p>
       )}
@@ -110,8 +110,8 @@ export const ChapterAccessForm = ({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormDescription>
-                      Check this box if you want to make this chapter free for preview
+                    <FormDescription> 
+                      Nếu bạn muốn làm chương này miễn phí
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -122,7 +122,7 @@ export const ChapterAccessForm = ({
                 disabled={!isValid || isSubmitting}
                 type="submit"
               >
-                Save
+                Lưu
               </Button>
             </div>
           </form>

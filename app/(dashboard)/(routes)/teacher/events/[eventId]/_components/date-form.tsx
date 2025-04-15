@@ -23,12 +23,14 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 interface DateFormProps {
-  initialData: Event & { date: string | null };
+  initialData: Event & { date: Date | null };
   eventId: string;
 }
 
 const formSchema = z.object({
-  date: z.string()
+  date: z.string().min(1, {
+    message: "Vui lòng chọn ngày và giờ cho sự kiện",
+  }),
 });
 
 export const DateForm = ({ initialData, eventId }: DateFormProps) => {
@@ -36,37 +38,49 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
   const toggleEdit = () => setIsEditing((current) => !current);
   const router = useRouter();
 
-  const formatDateForInput = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toISOString().slice(0, 16);
+  // Format Date object for datetime-local input
+  const formatDateForInput = (date: Date | null): string => {
+    if (!date || isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDThh:mm
   };
 
+  // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: formatDateForInput(initialData.date)
+      date: formatDateForInput(initialData.date),
     },
   });
 
   const { isSubmitting, isValid } = form.formState;
 
+  // Handle form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const dateToSubmit = new Date(values.date);
+      if (isNaN(dateToSubmit.getTime())) {
+        toast.error("Ngày giờ không hợp lệ");
+        return;
+      }
       await axios.patch(`/api/events/${eventId}`, {
-        date: values.date
+        date: dateToSubmit.toISOString(),
       });
-      toast.success("Cập nhật ngày thành công");
+      toast.success("Cập nhật thời gian sự kiện thành công");
       toggleEdit();
       router.refresh();
     } catch (error) {
       console.error("Error updating date:", error);
-      toast.error("Đã xảy ra lỗi khi cập nhật ngày");
+      toast.error("Đã xảy ra lỗi khi cập nhật thời gian sự kiện");
     }
   };
 
-  const formatDisplayDate = (date: Date | null) => {
-    if (!date) return "Chưa có ngày";
-    return new Date(date).toLocaleString("vi-VN", {
+  // Format date for display
+  const formatDisplayDate = (date: Date | null): string => {
+    if (!date || isNaN(date.getTime())) {
+      return "Chưa có thời gian";
+    }
+    return date.toLocaleString("vi-VN", {
+      weekday: "long",
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -78,14 +92,14 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Ngày diễn ra sự kiện
+        Thời gian diễn ra sự kiện
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Hủy</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Chỉnh sửa ngày
+              Chỉnh sửa
             </>
           )}
         </Button>
@@ -97,9 +111,7 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
             !initialData.date && "text-slate-500 italic"
           )}
         >
-          {initialData.date 
-            ? formatDisplayDate(new Date(initialData.date)) 
-            : "Chưa có ngày"}
+          {formatDisplayDate(initialData.date)}
         </p>
       )}
       {isEditing && (
@@ -117,10 +129,8 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
                     <Input
                       type="datetime-local"
                       disabled={isSubmitting}
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
+                      {...field}
+                      min={new Date().toISOString().slice(0, 16)} // Prevent past dates
                     />
                   </FormControl>
                   <FormDescription>
@@ -131,8 +141,12 @@ export const DateForm = ({ initialData, eventId }: DateFormProps) => {
               )}
             />
             <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Lưu
+              <Button
+                disabled={!isValid || isSubmitting}
+                type="submit"
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Lưu thay đổi
               </Button>
             </div>
           </form>

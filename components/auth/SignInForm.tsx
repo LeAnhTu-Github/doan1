@@ -112,7 +112,7 @@ export function SignInForm() {
         variant="outline"
         type="button"
         disabled={isLoading}
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        onClick={() => signIn("google", { callbackUrl: "/" })}
         className="w-full"
       >
         {isLoading ? (

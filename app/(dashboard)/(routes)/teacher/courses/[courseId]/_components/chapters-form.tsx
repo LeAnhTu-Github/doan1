@@ -93,14 +93,14 @@ export const ChaptersForm = ({
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-        Course chapters
+        Chương học
         <Button onClick={toggleCreating} variant="ghost">
           {isCreating ? (
-            <>Cancel</>
+              <>Hủy bỏ</>
           ) : (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
-              Add a chapter
+              Thêm chương
             </>
           )}
         </Button>
@@ -131,7 +131,7 @@ export const ChaptersForm = ({
               disabled={!isValid || isSubmitting}
               type="submit"
             >
-              Create
+              Tạo chương
             </Button>
           </form>
         </Form>
@@ -141,7 +141,7 @@ export const ChaptersForm = ({
           "text-sm mt-2",
           !initialData.chapters.length && "text-slate-500 italic"
         )}>
-          {!initialData.chapters.length && "No chapters"}
+          {!initialData.chapters.length && "Không có chương"}
           <ChaptersList
             onEdit={onEdit}
             onReorder={onReorder}
@@ -151,7 +151,7 @@ export const ChaptersForm = ({
       )}
       {!isCreating && (
         <p className="text-xs text-muted-foreground mt-4">
-          Drag and drop to reorder the chapters
+          Kéo thả để sắp xếp lại các chương
         </p>
       )}
     </div>

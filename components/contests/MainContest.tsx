@@ -18,7 +18,7 @@ const MainContest = ({ contest, isRegistered: initialIsRegistered = false, userI
 
   const handleRegister = async () => {
     if (!userId) {
-      router.push('/login');
+      router.push('/sign-in');
       return;
     }
 
@@ -113,7 +113,7 @@ const MainContest = ({ contest, isRegistered: initialIsRegistered = false, userI
           <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
             <Button
               style={primaryButtonStyle}
-              onClick={() => router.push(`/contests/${contest.id}/details`)}
+              onClick={() => router.push(`/eventPage`)}
             >
               Xem thêm
             </Button>

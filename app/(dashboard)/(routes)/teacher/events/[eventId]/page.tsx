@@ -74,9 +74,9 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
-            <h1 className="text-2xl font-medium">Event setup</h1>
+            <h1 className="text-2xl font-medium">Thiết lập sự kiện</h1>
             <span className="text-sm text-slate-700">
-              Complete all fields {completionText}
+              Hoàn tất tất cả các trường {completionText}
             </span>
           </div>
           <Actions
@@ -93,8 +93,9 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
             </div>
             <TitleForm initialData={event} courseId={event.id} />
             <NameForm initialData={event} courseId={event.id} />
-            <DescriptionForm initialData={event} courseId={event.id} />
             <ImageForm initialData={event} courseId={event.id} />
+            <DescriptionForm initialData={event} courseId={event.id} />
+            
           </div>
           <div className="space-y-6">
             <div>
@@ -106,7 +107,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
               <AuthorForm initialData={event} courseId={event.id} />
               <LinkForm initialData={event} courseId={event.id} />
               <AddressForm initialData={event} courseId={event.id} />
-              {/* <DateForm initialData={event} eventId={event.id} /> */}
+              <DateForm initialData={event} eventId={event.id} />
             </div>
             <div></div>
           </div>
