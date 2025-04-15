@@ -5,35 +5,29 @@ import type { NextRequest } from "next/server";
 // Định nghĩa các route không cần bảo vệ
 const publicRoutes = ['/sign-in', '/sign-up'];
 // Định nghĩa các route cần bảo vệ
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/'];
+
+const DEFAULT_LOGIN_REDIRECT = "/"; // Trang mặc định sau khi đăng nhập
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET 
+  });
+  
   const { pathname } = request.nextUrl;
   const isLoggedIn = !!token;
   
-  // Cho phép truy cập các route công khai mà không cần redirect
-  if (publicRoutes.includes(pathname)) {
-    // Nếu đã đăng nhập, redirect về trang chủ
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    // Nếu chưa đăng nhập, cho phép truy cập
-    return NextResponse.next();
+  // Nếu đã đăng nhập và đang ở trang auth (sign-in, sign-up)
+  if (isLoggedIn && publicRoutes.includes(pathname)) {
+    return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, request.url));
   }
 
-  // Kiểm tra các route được bảo vệ
-  if (protectedRoutes.some(route => pathname.startsWith(route))) {
-    if (!isLoggedIn) {
-      const signInUrl = new URL('/sign-in', request.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-  }
-
-  // Nếu chưa đăng nhập và không phải route công khai
-  if (!isLoggedIn && !publicRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+  // Nếu chưa đăng nhập và cố truy cập route khác ngoài public routes
+  if (!isLoggedIn && !publicRoutes.includes(pathname) && pathname !== '/') {
+    const signInUrl = new URL('/sign-in', request.url);
+    signInUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   return NextResponse.next();
@@ -48,7 +42,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - images (local images)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|images).*)',
   ],
 };

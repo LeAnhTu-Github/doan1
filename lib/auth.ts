@@ -118,14 +118,13 @@ export const authOptions: NextAuthOptions = {
           name: token.name as string | null,
           email: token.email as string | null,
           role: token.role as string | null,
-          imageUrl: token.image as string | null, // Corrected to imageUrl
+          imageUrl: token.image as string | null,
         };
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Luôn redirect về trang chủ sau khi đăng nhập
-      return baseUrl;
+      return `${baseUrl}/dashboard`;
     }
   },
 };
