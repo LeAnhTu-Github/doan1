@@ -87,7 +87,7 @@ const MainContest = ({ contest, isRegistered: initialIsRegistered = false, userI
           style={{ width: "100%", height: "600px", objectFit: "cover" }}
         />
 
-        <h2
+        {/* <h2
           style={{
             position: "absolute",
             top: "20px",
@@ -100,7 +100,7 @@ const MainContest = ({ contest, isRegistered: initialIsRegistered = false, userI
           }}
         >
           {contest.title}
-        </h2>
+        </h2> */}
 
         <div
           style={{

@@ -61,28 +61,12 @@ const EventClient = ({ data, regis, userId }: EventClientProps) => {
           </div>
 
           {/* Event Details */}
-          <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg p-8 animate-slide-up">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-6">Thông tin sự kiện</h3>
-            <div className="space-y-5">
-              <div className="flex items-center gap-4 group">
-                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Diễn giả:</span>
-                <span className="text-gray-800 font-medium">{data?.author ?? "Chưa xác định"}</span>
-              </div>
-              <div className="flex items-center gap-4 group">
-                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Ban tổ chức:</span>
-                <span className="text-gray-800 font-medium">{data?.host ?? "Chưa xác định"}</span>
-              </div>
-              <div className="flex items-center gap-4 group">
-                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Địa điểm:</span>
-                <span className="text-gray-800 font-medium">{data?.address ?? "Chưa xác định"}</span>
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         {/* Right Column: Registration Card */}
         <div className="lg:col-span-2">
-          <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl shadow-xl p-8 sticky top-8 animate-slide-up">
+          <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl shadow-xl p-8 sticky top-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Tham gia ngay</h3>
             
             {/* Thay thế phần countdown cũ bằng CountdownTimer */}
@@ -113,6 +97,23 @@ const EventClient = ({ data, regis, userId }: EventClientProps) => {
                     ? "Sự kiện đã diễn ra"
                     : "Đăng ký sự kiện"}
             </button>
+          </div>
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg p-8 animate-slide-up">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-6">Thông tin sự kiện</h3>
+            <div className="space-y-5">
+              <div className="flex items-center gap-4 group">
+                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Diễn giả:</span>
+                <span className="text-gray-800 font-medium">{data?.author ?? "Chưa xác định"}</span>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Ban tổ chức:</span>
+                <span className="text-gray-800 font-medium">{data?.host ?? "Chưa xác định"}</span>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <span className="font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Địa điểm:</span>
+                <span className="text-gray-800 font-medium">{data?.address ?? "Chưa xác định"}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

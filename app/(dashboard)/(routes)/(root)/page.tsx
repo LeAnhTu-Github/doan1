@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import ProblemsPage from "@/components/problem/page";
 import ContestPage from "@/components/contests/Contest";
 import Leaderboard from "@/components/leaderboard/Leaderboard";
+import { redirect } from "next/navigation";
 
 interface SearchPageProps {
   searchParams: {
@@ -22,11 +23,20 @@ interface SearchPageProps {
 
 export default async function Dashboard({ searchParams }: SearchPageProps) {
   const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.email) {
+    return redirect("/sign-in");
+  }
+
   const users = await db.user.findUnique({
     where: {
-      email: session?.user?.email!,
+      email: session.user.email,
     },
   });
+
+  if (!users) {
+    return redirect("/sign-in");
+  }
 
   const events = await db.event.findMany({
     orderBy: {
@@ -40,7 +50,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
   });
   const regisUsers = await db.courseRegister.findMany({
     where: {
-      userId: users?.id!,
+      userId: users.id,
     },
   });
   const regisEvents = await db.userRegister.findMany({
@@ -50,7 +60,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
   });
   const regis = regisUsers[0];
   const courses = await getCourses({
-    userId: users?.id!,
+    userId: users.id,
     ...searchParams,
   });
 
@@ -67,7 +77,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         </div>
         <Leaderboard />
       </div>
-      <New events={events} userId={users?.id!} regis={regisEvents} />
+      <New events={events} userId={users.id} regis={regisEvents} />
       
       <div className="w-full bg-white p-7 rounded-3xl flex flex-col gap-4 mt-4">
         <div className="flex gap-4 items-center">
@@ -81,7 +91,7 @@ export default async function Dashboard({ searchParams }: SearchPageProps) {
         </div>
         <div className="py-6 space-y-4">
           <Categories items={categories} />
-          <CoursesList items={courses} user={users!} regis={regis} />
+          <CoursesList items={courses} user={users} regis={regis} />
         </div>
       </div>
       

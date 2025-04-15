@@ -31,7 +31,7 @@ const guestRoutes = [
   },
   {
     icon: ScrollText,
-    label: "Kiểm tra",
+    label: "Bài tập",
     href: "/problem",
   },
 ];
