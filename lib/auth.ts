@@ -71,45 +71,50 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        const dbUser = await db.user.upsert({
-          where: { email: user.email || '' },
-          update: {
-            name: user.name,
-            image: user.image ? user.image : null, // Lưu trường image từ Google
-          },
-          create: {
-            email: user.email,
-            name: user.name,
-            image: user.image || null, // Lưu trường image
-            role: "USER",
-          },
+      try {
+        if (user) {
+          const dbUser = await db.user.upsert({
+            where: { email: user.email || '' },
+            update: {
+              name: user.name,
+              image: user.image ? user.image : null,
+            },
+            create: {
+              email: user.email,
+              name: user.name,
+              image: user.image || null,
+              role: "USER",
+            },
+          });
+
+          return {
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+            image: dbUser.image || null,
+          };
+        }
+
+        const dbUser = await db.user.findFirst({
+          where: { email: token.email },
         });
 
-        return {
-          id: dbUser.id,
-          name: dbUser.name,
-          email: dbUser.email,
-          role: dbUser.role,
-          image: dbUser.image || null, // Trả về image thay vì imageUrl
-        };
+        if (dbUser) {
+          return {
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+            image: dbUser.image || null,
+          };
+        }
+
+        return token;
+      } catch (error) {
+        console.error("JWT Callback Error:", error);
+        return token;
       }
-
-      const dbUser = await db.user.findFirst({
-        where: { email: token.email },
-      });
-
-      if (dbUser) {
-        return {
-          id: dbUser.id,
-          name: dbUser.name,
-          email: dbUser.email,
-          role: dbUser.role,
-          image: dbUser.image || null, // Sử dụng image
-        };
-      }
-
-      return token;
     },
     async session({ token, session }) {
       if (token) {
