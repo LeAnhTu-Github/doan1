@@ -1,47 +1,47 @@
+// app/(dashboard)/(routes)/teacher/problems/[problemId]/_components/metadata-form.tsx
 "use client";
 
 import * as z from "zod";
-import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Pencil } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-
+import { Pencil } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-interface DescriptionFormProps {
+interface MetadataFormProps {
   initialData: {
-    problemStatement: string;
+    metadata: any;
   } | null;
   problemId: string;
 }
 
 const formSchema = z.object({
-  problemStatement: z.string().min(1, "Problem statement is required"),
+  metadata: z.string().min(1, "Metadata is required"),
 });
 
-export const DescriptionForm = ({
+export const MetadataForm = ({
   initialData,
   problemId,
-}: DescriptionFormProps) => {
-  const router = useRouter();
+}: MetadataFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      problemStatement: initialData?.problemStatement || "",
+      metadata: initialData?.metadata ? JSON.stringify(initialData.metadata, null, 2) : "",
     },
   });
 
@@ -49,51 +49,39 @@ export const DescriptionForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true);
-      
-      const response = await fetch(`/api/problems/${problemId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        throw new Error("Something went wrong");
-      }
-
-      toast.success("Description updated successfully");
+      const metadata = JSON.parse(values.metadata);
+      await axios.patch(`/api/problems/${problemId}`, { metadata });
+      toast.success("Metadata đã được cập nhật");
       setIsEditing(false);
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
-    } finally {
-      setIsLoading(false);
+      if (error instanceof SyntaxError) {
+        toast.error("Định dạng JSON không hợp lệ");
+      } else {
+        toast.error("Đã xảy ra lỗi");
+      }
     }
   };
-
-  const toggleEdit = () => setIsEditing((current) => !current);
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Mô tả bài tập
-        <Button onClick={toggleEdit} variant="ghost">
+        Metadata
+        <Button onClick={() => setIsEditing(!isEditing)} variant="ghost">
           {isEditing ? (
             <>Hủy</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2" />
-              Chỉnh sửa mô tả
+              Chỉnh sửa metadata
             </>
           )}
         </Button>
       </div>
       {!isEditing && (
-        <p className="text-sm mt-2 whitespace-pre-wrap">
-          {initialData?.problemStatement}
-        </p>
+        <pre className="text-sm mt-2 bg-slate-200 rounded-md p-2">
+          {JSON.stringify(initialData?.metadata, null, 2)}
+        </pre>
       )}
       {isEditing && (
         <Form {...form}>
@@ -103,14 +91,14 @@ export const DescriptionForm = ({
           >
             <FormField
               control={form.control}
-              name="problemStatement"
+              name="metadata"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Textarea
-                      disabled={isLoading}
-                      placeholder="Mô tả bài tập..."
-                      className="min-h-[200px]"
+                      disabled={isSubmitting}
+                      placeholder="Nhập metadata dưới dạng JSON..."
+                      className="font-mono"
                       {...field}
                     />
                   </FormControl>
@@ -131,4 +119,4 @@ export const DescriptionForm = ({
       )}
     </div>
   );
-}; 
+};

@@ -6,6 +6,8 @@ import { Problem } from "@/utils/types/problem";
 import Confetti from "react-confetti";
 import useWindowSize from "@/hooks/useWindowSize";
 import Playground from "./Playground/Playground";
+import { useTheme } from "next-themes";
+import { Icons } from "@/components/icons";
 
 type WorkspaceProps = {
   id: string;
@@ -21,6 +23,7 @@ const Workspace = ({ id, setProblemScores, mode }: WorkspaceProps) => {
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Reset states khi id thay đổi
   useEffect(() => {
@@ -86,7 +89,7 @@ const Workspace = ({ id, setProblemScores, mode }: WorkspaceProps) => {
         {problem && (
           <Playground
             mode={mode}
-            key={id} // Thêm key để force re-render khi id thay đổi
+            key={id}
             ProblemId={id}
             problem={problem}
             setSuccess={setSuccess}

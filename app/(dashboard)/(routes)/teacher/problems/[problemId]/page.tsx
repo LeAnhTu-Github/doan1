@@ -14,6 +14,9 @@ import { DifficultyForm } from "./_components/difficulty-form";
 import { CategoryForm } from "./_components/category-form";
 import { TestCasesForm } from "./_components/test-cases-form";
 import { Actions } from "./_components/actions";
+import { FunctionForm } from "./_components/function-form";
+import { MetadataForm } from "./_components/metadata-form";
+import { CodeTemplateForm } from "./_components/code-template-form";
 
 // Extend type Problem để bao gồm cả testCases
 type ProblemWithTestCases = PrismaProblems & {
@@ -107,7 +110,7 @@ const ProblemIdPage = async ({ params }: { params: { problemId: string } }) => {
               <h2 className="text-xl">Thông tin bài tập</h2>
             </div>
             <TitleForm 
-              initialData={problem ? { title: problem.title } : null} 
+              initialData={problem?.title ? { title: problem.title } : null} 
               problemId={params.problemId} 
             />
             <DescriptionForm 
@@ -117,18 +120,38 @@ const ProblemIdPage = async ({ params }: { params: { problemId: string } }) => {
             <DifficultyForm 
               initialData={problem ? { difficulty: problem.difficulty } : null}
               problemId={params.problemId} 
-              options={difficulties.map((difficulty) => ({
+              options={difficulties.map(difficulty => ({
                 label: difficulty,
-                value: difficulty,
+                value: difficulty
               }))}
             />
             <CategoryForm
               initialData={problem ? { category: problem.category } : null}
               problemId={params.problemId}
-              options={categories.map((category) => ({
+              options={categories.map(category => ({
                 label: category,
-                value: category,
+                value: category
               }))}
+            />
+            <FunctionForm
+              initialData={problem ? { functionName: problem.functionName } : null}
+              problemId={params.problemId}
+            />
+            <MetadataForm
+              initialData={problem ? { metadata: problem.metadata } : null}
+              problemId={params.problemId}
+            />
+            <CodeTemplateForm
+              initialData={problem ? { 
+                codeTemplate: problem.codeTemplate as { 
+                  javascript?: string; 
+                  python?: string; 
+                  cpp?: string; 
+                  java?: string; 
+                  csharp?: string;
+                } 
+              } : null}
+              problemId={params.problemId}
             />
           </div>
           <div className="space-y-6">

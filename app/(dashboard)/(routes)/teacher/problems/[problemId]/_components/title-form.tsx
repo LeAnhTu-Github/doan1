@@ -22,27 +22,28 @@ import { Button } from "@/components/ui/button";
 // Định nghĩa interface dựa trên schema Prisma
 interface TitleFormProps {
   initialData: {
-    title: string | null;  // Phù hợp với schema Prisma
+    title: string;
   } | null;
   problemId: string;
 }
 
 // Schema validation cho form
 const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Tiêu đề là bắt buộc",
-  }),
+  title: z.string().min(1, "Title is required"),
 });
 
-export const TitleForm = ({ initialData, problemId }: TitleFormProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const toggleEdit = () => setIsEditing((current) => !current);
+export const TitleForm = ({
+  initialData,
+  problemId,
+}: TitleFormProps) => {
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: initialData?.title || "",  // Xử lý null safety
+      title: initialData?.title || "",
     },
   });
 
@@ -50,46 +51,53 @@ export const TitleForm = ({ initialData, problemId }: TitleFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      if (problemId === "new") {
-        const response = await axios.post("/api/problems", {
-          title: values.title,
-        });
-        toast.success("Bài tập đã được tạo");
-        router.push(`/teacher/problems/${response.data.id}`);
-      } else {
-        await axios.patch(`/api/problems/${problemId}`, {
-          title: values.title,
-        });
-        toast.success("Tiêu đề đã được cập nhật");
-        toggleEdit();
+      setIsLoading(true);
+      
+      const response = await fetch(`/api/problems/${problemId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error("Something went wrong");
       }
+
+      toast.success("Cập nhật thành công");
+      setIsEditing(false);
       router.refresh();
     } catch (error) {
       toast.error("Đã xảy ra lỗi");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const toggleEdit = () => setIsEditing((current) => !current);
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Tiêu đề bài tập
-        {problemId !== "new" && (
-          <Button onClick={toggleEdit} variant="ghost">
-            {isEditing ? (
-              <>Hủy</>
-            ) : (
-              <>
-                <Pencil className="h-4 w-4 mr-2" />
-                Chỉnh sửa tiêu đề
-              </>
-            )}
-          </Button>
-        )}
+        <Button onClick={toggleEdit} variant="ghost">
+          {isEditing ? (
+            <>Hủy</>
+          ) : (
+            <>
+              <Pencil className="h-4 w-4 mr-2" />
+              Chỉnh sửa tiêu đề
+            </>
+          )}
+        </Button>
       </div>
-      {!isEditing && initialData?.title && (
-        <p className="text-sm mt-2">{initialData.title}</p>
+      {!isEditing && (
+        <p className="text-sm mt-2">
+          {initialData?.title}
+        </p>
       )}
-      {(isEditing || problemId === "new") && (
+      {isEditing && (
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -102,8 +110,8 @@ export const TitleForm = ({ initialData, problemId }: TitleFormProps) => {
                 <FormItem>
                   <FormControl>
                     <Input
-                      disabled={isSubmitting}
-                      placeholder="Ví dụ: 'Tìm phần tử xuất hiện một lần'"
+                      disabled={isLoading}
+                      placeholder="e.g. Two Sum"
                       {...field}
                     />
                   </FormControl>
@@ -112,11 +120,11 @@ export const TitleForm = ({ initialData, problemId }: TitleFormProps) => {
               )}
             />
             <div className="flex items-center gap-x-2">
-              <Button 
-                disabled={!isValid || isSubmitting} 
+              <Button
+                disabled={!isValid || isSubmitting}
                 type="submit"
               >
-                {problemId === "new" ? "Tạo bài tập" : "Lưu thay đổi"}
+                Lưu
               </Button>
             </div>
           </form>

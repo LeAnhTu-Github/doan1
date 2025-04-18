@@ -12,6 +12,8 @@ import {
 import { BsCheck2Circle } from "react-icons/bs";
 import { TiStarOutline } from "react-icons/ti";
 import { Problem } from "@prisma/client";
+import Link from "next/link";
+import { IoArrowBack } from "react-icons/io5";
 
 interface IProps {
   ProblemId: string;
@@ -43,20 +45,21 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
     }
   }, [ProblemId]);
 
-
-  const problemDifficultyClass = "bg-dark-layer-1 text-dark-layer-1";
-  const liked = false;
-  const disliked = false;
+  const problemDifficultyClass = "bg-dark-layer-1 text-dark-layer-1 dark:bg-gray-200 dark:text-gray-800";
   const solved = false;
-  const starred = false;
-  const updating = false;
 
-  // Nếu chưa có dữ liệu hoặc đang loading
   if (loading) {
     return (
-      <div className="bg-dark-layer-1">
-        <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 text-white overflow-x-hidden">
-          <div className="bg-dark-layer-1 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
+      <div className="bg-dark-layer-1 dark:bg-gray-100">
+        <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 dark:bg-gray-200 text-white dark:text-gray-800 overflow-x-hidden">
+          <Link 
+            href="/"
+            className="flex items-center px-5 py-[10px] text-xs hover:text-blue-500 dark:hover:text-blue-600 transition-colors"
+          >
+            <IoArrowBack className="h-4 w-4 mr-2" />
+            Trang chủ
+          </Link>
+          <div className="bg-dark-layer-1 dark:bg-gray-100 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
             {`Description - id: ${ProblemId}`}
           </div>
         </div>
@@ -75,38 +78,48 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
     );
   }
 
-  // Nếu không có problems (fetch thất bại)
   if (!problems) {
     return (
-      <div className="bg-dark-layer-1">
-        <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 text-white overflow-x-hidden">
-          <div className="bg-dark-layer-1 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
-            {`Description - id: ${ProblemId}`}
+      <div className="bg-dark-layer-1 dark:bg-gray-100">
+        <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 dark:bg-gray-200 text-white dark:text-gray-800 overflow-x-hidden">
+          <Link 
+            href="/"
+            className="flex items-center px-5 py-[10px] text-xs hover:text-blue-500 dark:hover:text-blue-600 transition-colors"
+          >
+            <IoArrowBack className="h-4 w-4 mr-2" />
+            Trang chủ
+          </Link>
+          <div className="bg-dark-layer-1 dark:bg-gray-100 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
+            {`Miêu tả bài toán`}
           </div>
         </div>
         <div className="flex px-0 py-4 h-[calc(100vh-94px)] overflow-y-auto">
-          <div className="px-5 text-white">Không tìm thấy bài tập nào</div>
+          <div className="px-5 text-white dark:text-gray-800">Không tìm thấy bài tập nào</div>
         </div>
       </div>
     );
   }
 
-  // Khi có dữ liệu
   return (
-    <div className="bg-dark-layer-1">
-      {/* TAB */}
-      <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 text-white overflow-x-hidden">
-        <div className="bg-dark-layer-1 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
-          {`Description - id: ${ProblemId}`}
+    <div className="bg-dark-layer-1 dark:bg-gray-100">
+      <div className="flex h-11 w-full items-center pt-2 bg-dark-layer-2 dark:bg-gray-200 text-white dark:text-gray-800 overflow-x-hidden">
+        <Link 
+          href="/"
+          className="flex items-center px-5 py-[10px] text-xs hover:text-blue-500 dark:hover:text-blue-600 transition-colors"
+        >
+          <IoArrowBack className="h-4 w-4 mr-2" />
+          Trang chủ
+        </Link>
+        <div className="bg-dark-layer-1 dark:bg-gray-100 rounded-t-[5px] px-5 py-[10px] text-xs cursor-pointer">
+          {`Miêu tả bài toán`}
         </div>
       </div>
 
       <div className="flex px-0 py-4 h-[calc(100vh-94px)] overflow-y-auto">
         <div className="px-5">
-          {/* Problem heading */}
           <div className="w-full">
             <div className="flex space-x-4">
-              <div className="flex-1 mr-2 text-lg text-white font-medium">
+              <div className="flex-1 mr-2 text-lg text-white dark:text-gray-800 font-medium">
                 {problems.title}
               </div>
             </div>
@@ -118,41 +131,39 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
                 {problems.difficulty}
               </div>
               {solved && (
-                <div className="rounded p-[3px] ml-4 text-lg transition-colors duration-200 text-green-s text-dark-green-s">
+                <div className="rounded p-[3px] ml-4 text-lg transition-colors duration-200 text-green-s text-dark-green-s dark:text-green-600">
                   <BsCheck2Circle />
                 </div>
               )}
             </div>
 
-            {/* Problem Statement */}
-            <div className="text-white text-sm">
+            <div className="text-white dark:text-gray-800 text-sm">
               <div
                 dangerouslySetInnerHTML={{ __html: problems.problemStatement }}
               />
             </div>
 
-            {/* Examples */}
             <div className="mt-4">
               {problems.examples && Array.isArray(problems.examples) ? (
                 problems.examples.map((example: any, index: number) => (
                   <div key={index}>
-                    <p className="font-medium text-white">
-                      Example {index + 1}:
+                    <p className="font-medium text-white dark:text-gray-800">
+                      Ví dụ {index + 1}:
                     </p>
                     {example.img && (
                       <Image src={example.img} alt="" className="mt-3" />
                     )}
                     <div className="example-card">
                       <pre>
-                        <strong className="text-white">Input: </strong>
+                        <strong className="text-white dark:text-gray-800">Đầu vào: </strong>
                         {example.inputText || example.input}
                         <br />
-                        <strong>Output: </strong>
+                        <strong>Đầu ra: </strong>
                         {example.outputText || example.output}
                         <br />
                         {example.explanation && (
                           <>
-                            <strong>Explanation: </strong>
+                            <strong>Giải thích: </strong>
                             {example.explanation}
                           </>
                         )}
@@ -161,14 +172,13 @@ const ProblemDescription = ({ ProblemId }: IProps) => {
                   </div>
                 ))
               ) : (
-                <p className="text-white">No examples available</p>
+                <p className="text-white dark:text-gray-800">Không có ví dụ</p>
               )}
             </div>
 
-            {/* Constraints */}
             <div className="my-8 pb-4">
-              <div className="text-white text-sm font-medium">Constraints:</div>
-              <ul className="text-white ml-5 list-disc">
+              <div className="text-white dark:text-gray-800 text-sm font-medium">Giới hạn:</div>
+              <ul className="text-white dark:text-gray-800 ml-5 list-disc">
                 <div
                   dangerouslySetInnerHTML={{ __html: problems.constraints }}
                 />

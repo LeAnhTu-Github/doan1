@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import { Select } from "antd";
 import {
@@ -5,6 +6,8 @@ import {
   AiOutlineFullscreenExit,
   AiOutlineSetting,
 } from "react-icons/ai";
+import { MdDarkMode, MdLightMode } from "react-icons/md";
+import { useTheme } from "next-themes";
 
 type PreferenceNavProps = {
   setLanguage: (language: string) => void;
@@ -13,6 +16,7 @@ type PreferenceNavProps = {
 const PreferenceNav: React.FC<PreferenceNavProps> = ({ setLanguage }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const { theme, setTheme } = useTheme();
 
   const handleFullScreen = () => {
     if (isFullScreen) {
@@ -25,7 +29,11 @@ const PreferenceNav: React.FC<PreferenceNavProps> = ({ setLanguage }) => {
 
   const handleChangeLanguage = (value: string) => {
     setSelectedLanguage(value);
-    setLanguage(value); // Cập nhật state ngôn ngữ ở Playground
+    setLanguage(value);
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   useEffect(() => {
@@ -42,7 +50,7 @@ const PreferenceNav: React.FC<PreferenceNavProps> = ({ setLanguage }) => {
   }, []);
 
   return (
-    <div className="flex items-center justify-between bg-dark-layer-2 h-11 w-full px-4">
+    <div className="flex items-center justify-between bg-dark-layer-2 dark:bg-gray-200 h-11 w-full px-4">
       <Select
         className="w-40"
         value={selectedLanguage}
@@ -58,14 +66,22 @@ const PreferenceNav: React.FC<PreferenceNavProps> = ({ setLanguage }) => {
 
       <div className="flex items-center space-x-3">
         <button className="preferenceBtn group">
-          <AiOutlineSetting className="h-5 w-5 text-gray-400" />
+          <AiOutlineSetting className="h-5 w-5 text-gray-400 dark:text-gray-600" />
         </button>
 
         <button className="preferenceBtn group" onClick={handleFullScreen}>
           {isFullScreen ? (
-            <AiOutlineFullscreenExit className="h-5 w-5 text-gray-400" />
+            <AiOutlineFullscreenExit className="h-5 w-5 text-gray-400 dark:text-gray-600" />
           ) : (
-            <AiOutlineFullscreen className="h-5 w-5 text-gray-400" />
+            <AiOutlineFullscreen className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+          )}
+        </button>
+
+        <button className="preferenceBtn group" onClick={toggleTheme}>
+          {theme === "dark" ? (
+            <MdLightMode className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+          ) : (
+            <MdDarkMode className="h-5 w-5 text-gray-400 dark:text-gray-600" />
           )}
         </button>
       </div>

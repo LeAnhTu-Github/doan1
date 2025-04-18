@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 // GET all problems or by specific query
 export async function GET(request: Request) {
     try {
@@ -28,42 +30,45 @@ export async function GET(request: Request) {
     }
 }
 
-// POST create new problem
-export async function POST(request: Request) {
+export async function POST(req: Request) {
     try {
-        const body = await request.json();
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
 
+        // Tạo problem mới với các giá trị mặc định
         const problem = await db.problem.create({
             data: {
-                title: body.title,
-                difficulty: body.difficulty,
-                category: body.category,
-                language: body.language,
-                time: body.time ? new Date(body.time) : undefined,
-                order: body.order,
-                problemStatement: body.problemStatement,
-                examples: body.examples,
-                constraints: body.constraints,
-                status: body.status,
-                metadata: body.metadata,
-                codeTemplate: body.codeTemplate,
-                functionName: body.functionName,
-                testCases: {
-                    create: body.testCases?.map((testCase: any) => ({
-                        input: testCase.input,
-                        expected: testCase.expected,
-                        isHidden: testCase.isHidden || false
-                    })) || [],
+                title: "Bài tập mới",
+                difficulty: "Easy",
+                category: "Array",
+                language: 1,
+                problemStatement: "",
+                functionName: "",
+                status: false,
+                examples: "",
+                constraints: "",
+                metadata: {
+                    params: [],
+                    return: {
+                        type: "",
+                        description: ""
+                    }
                 },
-            },
+                codeTemplate: {
+                    javascript: "",
+                    python: "",
+                    cpp: "",
+                    java: "",
+                    csharp: ""
+                }
+            }
         });
 
-        return NextResponse.json(problem, { status: 201 });
+        return NextResponse.json(problem);
     } catch (error) {
-        console.error('Error creating problem:', error);
-        return NextResponse.json(
-            { error: 'Failed to create problem' },
-            { status: 500 }
-        );
+        console.error("[PROBLEMS_POST]", error);
+        return new NextResponse("Internal Error", { status: 500 });
     }
 }

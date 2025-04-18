@@ -11,6 +11,7 @@ import { Problem } from "@prisma/client";
 import { CodeWrapperService } from "@/lib/codeWrapper";
 import { useParams } from 'next/navigation';
 import SuccessModal from '@/components/modals/SuccessModal';
+import AutoSubmitWarningModal from '@/components/modals/AutoSubmitWarningModal';
 
 type PlaygroundProps = {
   ProblemId: string;
@@ -30,7 +31,7 @@ interface TestCase {
   updatedAt: string;
 }
 
-const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, setProblemScores, mode }) => {
+const Playground: React.FC<PlaygroundProps> = ({ ProblemId, problem, setSuccess, setProblemScores, mode }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState(0);
@@ -68,6 +69,8 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   const params = useParams();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submissionScore, setSubmissionScore] = useState({ score: 0, totalScore: 0, solvedCount: 0 });
+  const hasSubmittedRef = useRef(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
 
   useEffect(() => {
     const storedCode = localStorage.getItem(`code-${ProblemId}-${selectedLanguage}`);
@@ -93,6 +96,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       }
     }
   }, [selectedLanguage, ProblemId, problem.codeTemplate]);
+
   useEffect(() => {
     const fetchTestCases = async () => {
       try {
@@ -114,21 +118,43 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
     if (ProblemId) {
       fetchTestCases();
     }
-
-    // Load code từ localStorage khi mount
-    const storedCode = localStorage.getItem(`code-${ProblemId}`);
-    if (storedCode) {
-      setCode(JSON.parse(storedCode));
-    }
   }, [ProblemId]);
+
+  useEffect(() => {
+    if (hasSubmittedRef.current) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && !hasSubmittedRef.current && !showWarningModal) {
+        console.log("Tab switched, showing warning modal...");
+        setShowWarningModal(true);
+      }
+    };
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasSubmittedRef.current && !showWarningModal) {
+        console.log("Page leaving, showing warning modal...");
+        setShowWarningModal(true);
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+
+    if (mode === 'contest') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [mode, ProblemId, selectedLanguage, showWarningModal]);
 
   const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
-    // Đồng bộ code từ state vào editor khi mount
     editor.setValue(code);
   };
 
-  // Hàm xử lý khi code trong editor thay đổi
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
       setCode(value);
@@ -136,7 +162,6 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
     }
   };
 
-  // Sửa lại hàm handleSubmit
   const handleRun = async () => {
     if (!editorRef.current) {
       setOutput("Editor not initialized");
@@ -151,16 +176,14 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
   
     try {
       if (mode === 'contest') {
-        // Contest mode: chạy trực tiếp code của người dùng
         const result = await executeCode({
-          source_code: userCode, // Sử dụng code gốc không qua wrapper
+          source_code: userCode,
           language_id: languageId,
-          stdin: "", // Không cần stdin vì input đã nằm trong code
+          stdin: "",
         });
 
         setOutput(result.trim());
       } else {
-        // Practice mode: giữ nguyên logic cũ
         if (!testCases.length || !testCases[activeTestCaseId]) {
           setOutput("No valid test case available");
           setIsRunning(false);
@@ -224,13 +247,13 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       return;
     }
 
-    // Chỉ hiển thị confirm dialog trong practice mode
-    if (mode === 'practice' && !window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
+    if (mode === 'practice' && !hasSubmittedRef.current && !window.confirm('Bạn có chắc chắn muốn nộp bài? Hành động này không thể hoàn tác.')) {
       return;
     }
 
     setIsSubmitting(true);
     setOutput("Submitting...");
+    setShowWarningModal(false);
 
     try {
       const userCode = editorRef.current.getValue();
@@ -257,19 +280,14 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
         setSuccess(data.results.status === 'Accepted');
         setProblemScores(ProblemId, data.results.score);
 
-        // Cập nhật state cho modal
         setSubmissionScore({
           score: data.results.score,
-          totalScore: 100, // hoặc lấy từ problem.totalScore nếu có
+          totalScore: 100,
           solvedCount: data.results.solvedCount
         });
         setShowSuccessModal(true);
-
       } else {
-        // Contest mode logic...
         const contestId = params.id as string;
-        // ... existing contest submission code ...
-
         const response = await fetch(`/api/contests/${contestId}/submissions`, {
           method: 'POST',
           headers: {
@@ -292,7 +310,6 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
         setSuccess(data.results.status === 'Accepted');
         setProblemScores(ProblemId, data.results.score);
 
-        // Cập nhật state cho modal trong contest mode
         setSubmissionScore({
           score: data.results.score,
           totalScore: 10,
@@ -307,17 +324,24 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
       setProblemScores(ProblemId, 0);
     } finally {
       setIsSubmitting(false);
+      hasSubmittedRef.current = true;
     }
   };
 
+  const handleCancelAutoSubmit = () => {
+    setShowWarningModal(false);
+  };
+
   if (isLoading) {
-    return <div className="text-white">Đang tải test cases...</div>;
+    return <div className="text-white dark:text-gray-800">Đang tải test cases...</div>;
   }
+
   const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
+
   return (
     <>
       <PreferenceNav setLanguage={setSelectedLanguage} />
-      <div className="flex flex-col bg-dark-layer-1 relative overflow-x-hidden">
+      <div className="flex flex-col bg-dark-layer-1 dark:bg-gray-100 relative overflow-x-hidden">
         <Split className="h-[calc(100vh-94px)]" direction="vertical" sizes={[60, 40]} minSize={60}>
           <div className="w-full overflow-auto">
             <Editor
@@ -333,17 +357,17 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
               }}
             />
           </div>
-          <div className="w-full px-5 overflow-auto">
+          <div className="w-full px-4 overflow-auto">
             {mode === 'contest' ? (
-              <div className="font-semibold my-4 text-white">
-                <p className="text-sm font-medium mt-4">Đầu ra:</p>
-                <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
+              <div className="font-semibold my-2 text-white dark:text-gray-800">
+                <p className="text-xs font-medium mt-3">Đầu ra:</p>
+                <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 whitespace-pre-wrap text-sm text-white dark:text-gray-800">
                   {isRunning ? "Đang chạy..." : isSubmitting ? "Đang nộp..." : (output || "Chưa có đầu ra")}
                 </div>
                 {submissionResult && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium">Kết quả bài nộp:</p>
-                    <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                  <div className="mt-2">
+                    <p className="text-xs font-medium">Kết quả bài nộp:</p>
+                    <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 text-sm text-white dark:text-gray-800">
                       <p>Trạng thái: {submissionResult.status}</p>
                       <p>Điểm số: {submissionResult.score}</p>
                       <p>Tổng điểm: {submissionResult.totalScore}</p>
@@ -353,24 +377,24 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
               </div>
             ) : (
               showConsole ? (
-                <div className="font-semibold my-4 text-white">
-                  <p className="text-sm font-medium mt-4">Đầu ra:</p>
-                  <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3 whitespace-pre-wrap">
+                <div className="font-semibold my-2 text-white dark:text-gray-800">
+                  <p className="text-xs font-medium mt-3">Đầu ra:</p>
+                  <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 whitespace-pre-wrap text-sm text-white dark:text-gray-800">
                     {isRunning ? "Đang chạy..." : isSubmitting ? "Đang nộp..." : (output || "Chưa có đầu ra")}
                   </div>
                   {submissionResult && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium">Kết quả bài nộp:</p>
-                      <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
+                    <div className="mt-2">
+                      <p className="text-xs font-medium">Kết quả bài nộp:</p>
+                      <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 text-sm text-white dark:text-gray-800">
                         <p>Trạng thái bài nộp: {submissionResult.status}</p>
                         <p>Điểm số: {submissionResult.score}</p>
                         <p>Tổng điểm: {submissionResult.totalScore}</p>
-                        <div className="mt-2">
-                          <p className="font-medium">Kết quả test case:</p>
+                        <div className="mt-1">
+                          <p className="font-medium text-xs">Kết quả test case:</p>
                           {submissionResult.testCaseResults.map((result, index) => (
-                            <div key={index} className="mt-1">
+                            <div key={index} className="mt-0.5">
                               <p>Case {index + 1}: {result.status}</p>
-                              {result.stderr && <p className="text-red-500">Lỗi: {result.stderr}</p>}
+                              {result.stderr && <p className="text-red-500 dark:text-red-600 text-sm">Lỗi: {result.stderr}</p>}
                             </div>
                           ))}
                         </div>
@@ -380,48 +404,48 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
                 </div>
               ) : (
                 <>
-                  <div className="flex h-10 items-center space-x-6">
-                    <div className="text-sm font-medium text-white">Testcases</div>
+                  <div className="flex h-8 items-center space-x-4">
+                    <div className="text-xs font-medium text-white dark:text-gray-800">Testcases</div>
                   </div>
                   <div className="flex">
-                      {visibleTestCases.map((testCase, index) => (
+                    {visibleTestCases.map((testCase, index) => (
+                      <div
+                        key={testCase.id}
+                        className="mr-1.5 mt-1.5"
+                        onClick={() => setActiveTestCaseId(index)}
+                      >
                         <div
-                          key={testCase.id}
-                          className="mr-2 mt-2"
-                          onClick={() => setActiveTestCaseId(index)}
+                          className={`px-3 py-0.5 rounded-md cursor-pointer border text-xs ${
+                            testCaseResults[ProblemId]?.[index]
+                              ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500 dark:border-green-600 dark:bg-green-600 dark:bg-opacity-20 dark:text-green-600"
+                              : testCaseResults[ProblemId]?.[index] === false
+                              ? "border-red-500 bg-red-500 bg-opacity-20 text-red-500 dark:border-red-600 dark:bg-red-600 dark:bg-opacity-20 dark:text-red-600"
+                              : activeTestCaseId === index
+                              ? "border-white text-white dark:border-gray-800 dark:text-gray-800"
+                              : "border-white text-gray-500 dark:border-gray-400 dark:text-gray-400"
+                          }`}
                         >
-                          <div
-                            className={`px-4 py-1 rounded-lg cursor-pointer border ${
-                              testCaseResults[ProblemId]?.[index]
-                                ? "border-green-500 bg-green-500 bg-opacity-20 text-green-500"
-                                : testCaseResults[ProblemId]?.[index] === false
-                                ? "border-red-500 bg-red-500 bg-opacity-20 text-red-500"
-                                : activeTestCaseId === index
-                                ? "border-white text-white"
-                                : "border-white text-gray-500"
-                            }`}
-                          >
                           Case {index + 1}
                         </div>
                       </div>
                     ))}
                   </div>
-                    {visibleTestCases.length > 0 && visibleTestCases[activeTestCaseId] && (
-                      <div className="font-semibold my-4 text-white">
-                        <p className="text-sm font-medium mt-4">Đầu vào:</p>
-                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                          {JSON.stringify(visibleTestCases[activeTestCaseId].input, null, 2)}
-                        </div>
-                        <p className="text-sm font-medium mt-4">Đầu ra dự kiến:</p>
-                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                          {visibleTestCases[activeTestCaseId].expected}
-                        </div>
-                        <p className="text-sm font-medium mt-4">Đầu ra thực tế:</p>
-                        <div className="w-full rounded-lg border px-3 py-[10px] bg-dark-fill-3">
-                          {testCaseOutputs[ProblemId]?.[activeTestCaseId] || "Chưa chạy"}
-                        </div>
+                  {visibleTestCases.length > 0 && visibleTestCases[activeTestCaseId] && (
+                    <div className="font-semibold my-2 text-white dark:text-gray-800">
+                      <p className="text-xs font-medium mt-3">Đầu vào:</p>
+                      <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 text-sm text-white dark:text-gray-800">
+                        {JSON.stringify(visibleTestCases[activeTestCaseId].input, null, 2)}
                       </div>
-                    )}
+                      <p className="text-xs font-medium mt-3">Đầu ra dự kiến:</p>
+                      <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 text-sm text-white dark:text-gray-800">
+                        {visibleTestCases[activeTestCaseId].expected}
+                      </div>
+                      <p className="text-xs font-medium mt-3">Đầu ra thực tế:</p>
+                      <div className="w-full rounded-lg border px-2 py-1.5 bg-dark-fill-3 dark:bg-gray-200 text-sm text-white dark:text-gray-800">
+                        {testCaseOutputs[ProblemId]?.[activeTestCaseId] || "Chưa chạy"}
+                      </div>
+                    </div>
+                  )}
                 </>
               )
             )}
@@ -442,6 +466,11 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId,problem, setSuccess, 
         score={submissionScore.score}
         totalScore={submissionScore.totalScore}
         solvedCount={mode === 'practice' ? submissionScore.solvedCount : undefined}
+      />
+      <AutoSubmitWarningModal
+        isOpen={showWarningModal}
+        onConfirm={handleSubmit}
+        onCancel={handleCancelAutoSubmit}
       />
     </>
   );

@@ -185,14 +185,12 @@ export const TestCasesForm = ({ initialData, problemId }: TestCasesFormProps) =>
     );
   };
 
-  const renderInputField = () => {
-    const inputType = form.watch("inputType");
-    
+  const renderInputField = () => {    
     if (inputType === "json" || inputType.includes("[]")) {
       return (
         <Textarea
           disabled={isSubmitting}
-          placeholder="Nhập input dưới dạng JSON..."
+          placeholder="Enter input as JSON..."
           className="min-h-[100px] font-mono"
           {...form.register("input")}
         />
@@ -201,7 +199,7 @@ export const TestCasesForm = ({ initialData, problemId }: TestCasesFormProps) =>
       return (
         <Input
           disabled={isSubmitting}
-          placeholder="Nhập input..."
+          placeholder="Enter input..."
           {...form.register("input")}
         />
       );
@@ -233,7 +231,7 @@ export const TestCasesForm = ({ initialData, problemId }: TestCasesFormProps) =>
                   name="inputType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Loại input</FormLabel>
+                      <FormLabel>Input Type</FormLabel>
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value);
@@ -243,7 +241,7 @@ export const TestCasesForm = ({ initialData, problemId }: TestCasesFormProps) =>
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Chọn loại input" />
+                            <SelectValue placeholder="Select input type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

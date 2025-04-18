@@ -1,13 +1,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
 
 import { db } from "@/lib/db";
 import { DataTable } from "@/components/ui/data-table";
-import { Button } from "@/components/ui/button";
 import { columns } from "./_components/columns";
-import Link from "next/link";
+import { CreateProblemButton } from "./_components/create-problem-button";
+
 const ProblemsPage = async () => {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
@@ -31,12 +30,7 @@ const ProblemsPage = async () => {
             Tạo và quản lý các bài tập lập trình
           </span>
         </div>
-        <Link href="/teacher/problems/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo bài tập mới
-          </Button>
-        </Link>
+        <CreateProblemButton />
       </div>
       <div className="mt-6">
         <DataTable columns={columns} data={problems} />

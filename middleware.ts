@@ -14,9 +14,6 @@ export async function middleware(request: NextRequest) {
     req: request,
     secret: process.env.NEXTAUTH_SECRET 
   });
-  // Thêm logging trong production để debug
-  console.log("Path:", request.nextUrl.pathname);
-  console.log("Token exists:", !!token);
   const { pathname } = request.nextUrl;
   // const isLoggedIn = !!token;
   
