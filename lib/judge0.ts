@@ -1,5 +1,5 @@
-const JUDGE0_HOST = "localhost:2358";
-const JUDGE0_PROTOCOL = "http";
+const JUDGE0_HOST = "uneti.ngrok.app";
+const JUDGE0_PROTOCOL = "https";
 
 export const languageMap = {
   javascript: 63,
