@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# UI and Styling Guidelines
+
+## Component Architecture
+- Use Shadcn UI for base components
+- Implement Radix UI for complex interactions
+- Follow atomic design principles:
+  - Atoms: Basic UI elements
+  - Molecules: Simple component combinations
+  - Organisms: Complex UI sections
+  - Templates: Page layouts
+  - Pages: Complete views
+
+## Tailwind CSS Usage
+- Follow mobile-first approach:
+```tsx
+// Good
+<div className="p-4 md:p-6 lg:p-8">
+  <h1 className="text-lg md:text-xl lg:text-2xl">
+    Title
+  </h1>
+</div>
+```
+
+## Responsive Design
+- Use standard breakpoints:
+  - sm: 640px
+  - md: 768px
+  - lg: 1024px
+  - xl: 1280px
+  - 2xl: 1536px
+
+## Accessibility
+- Use semantic HTML elements
+- Implement proper ARIA attributes
+- Ensure keyboard navigation
+- Maintain color contrast ratios
+- Support screen readers
+
+## Component Examples
+```tsx
+// Good component structure
+export const Button = ({
+  variant = 'primary',
+  size = 'medium',
+  children,
+  ...props
+}: ButtonProps) => {
+  return (
+    <button
+      className={cn(
+        'rounded-md font-medium transition-colors',
+        variantStyles[variant],
+        sizeStyles[size]
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+## Dark Mode
+- Use Tailwind's dark mode utilities
+- Implement system preference detection
+- Allow user preference override
+- Test both themes thoroughly

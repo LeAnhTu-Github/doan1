@@ -197,6 +197,6 @@ export const columns: ColumnDef<User>[] = [
   {
     id: "actions",
     header: "Hành động",
-    cell: CeilData,
+    cell: (cellProps) => <CeilData {...cellProps} />,
   },
 ];

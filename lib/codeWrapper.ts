@@ -1,5 +1,6 @@
 import { ProblemMetadata, CodeTemplate } from './problem';
 
+
 export class CodeWrapperService {
   static generateWrapper(
     userCode: string,
@@ -50,18 +51,46 @@ stdin.on('end', () => {
     metadata: ProblemMetadata,
     functionName: string
   ): string {
-    // Đảm bảo userCode không có thụt lề không mong muốn
-    const cleanUserCode = userCode
-      .split('\n')
-      .map(line => line.trimStart()) // Loại bỏ khoảng trắng đầu dòng
+    // Detect typing imports needed
+    const typingTypes = [];
+    if (/List\[/.test(userCode)) typingTypes.push("List");
+    if (/Dict\[/.test(userCode)) typingTypes.push("Dict");
+    if (/Optional\[/.test(userCode)) typingTypes.push("Optional");
+  
+    let importTyping = "";
+    if (typingTypes.length > 0) {
+      importTyping = `from typing import ${typingTypes.join(", ")}\n`;
+    }
+  
+    // Normalize line endings and split user code into lines
+    const lines = userCode.replace(/\r\n/g, '\n').split('\n');
+  
+    // Find the minimum indentation level of non-empty lines
+    let minIndent = Infinity;
+    for (const line of lines) {
+      if (line.trim().length > 0) {
+        const indent = line.match(/^\s*/)?.[0].length || 0;
+        minIndent = Math.min(minIndent, indent);
+      }
+    }
+  
+    // Remove the minimum indentation from each line to normalize
+    const normalizedLines = lines.map(line => {
+      if (line.trim().length === 0) return line;
+      return line.slice(minIndent);
+    });
+  
+    // Add proper indentation (e.g., 4 spaces) for the wrapper
+    const indentedUserCode = normalizedLines
+      .map(line => line.length > 0 ? '    ' + line : line)
       .join('\n')
       .trim();
   
     const wrapper = `
   import json
   import sys
-  
-  ${cleanUserCode}
+  ${importTyping}
+  ${indentedUserCode}
   
   # Test case runner
   input_data = sys.stdin.read()
@@ -70,14 +99,7 @@ stdin.on('end', () => {
   print(json.dumps(result))
   `;
   
-    // Loại bỏ khoảng trắng thừa và đảm bảo không có thụt lề ở cấp cao nhất
-    const cleanWrapper = wrapper
-      .split('\n')
-      .map(line => line.trimStart()) // Loại bỏ khoảng trắng đầu dòng
-      .join('\n')
-      .trim();
-  
-    return cleanWrapper;
+    return wrapper.trim();
   }
   
 
@@ -86,72 +108,107 @@ stdin.on('end', () => {
     metadata: ProblemMetadata,
     functionName: string
   ): string {
-    // Nếu userCode đã chứa main(), không thêm wrapper
     if (userCode.includes('main')) {
-      const cleanCode = userCode
-        .replace(/[^\x20-\x7E\n\t]/g, '')
-        .replace(/\r\n/g, '\n')
-        .trim();
-      console.log('Cleaned user code:\n', cleanCode);
-      console.log('Hex dump:\n', Buffer.from(cleanCode).toString('hex'));
-      return cleanCode;
+      return userCode.replace(/[^\x20-\x7E\n\t]/g, '').replace(/\r\n/g, '\n').trim();
+    }
+  
+    let includes = `#include <iostream>
+  #include <vector>
+  #include <string>
+  using namespace std;
+  `;
+  
+    if (userCode.includes('unordered_map')) {
+      includes += `#include <unordered_map>\n`;
+    }
+  
+    let inputParsing = '';
+    let paramArgs = '';
+    const params = metadata.params || [];
+    params.forEach((param, index) => {
+      if (param.type === 'number[]') {
+        inputParsing += `
+      int n${index};
+      cin >> n${index};
+      vector<int> param${index}(n${index});
+      for (int i = 0; i < n${index}; ++i) {
+          cin >> param${index}[i];
+      }
+  `;
+      } else if (param.type === 'string[]') {
+        inputParsing += `
+      int n${index};
+      cin >> n${index};
+      vector<string> param${index}(n${index});
+      for (int i = 0; i < n${index}; ++i) {
+          cin >> param${index}[i];
+      }
+  `;
+      } else if (param.type === 'number') {
+        inputParsing += `
+      int param${index};
+      cin >> param${index};
+  `;
+      } else if (param.type === 'string') {
+        inputParsing += `
+      string param${index};
+      cin >> param${index};
+  `;
+      }
+      paramArgs += `param${index}${index < params.length - 1 ? ', ' : ''}`;
+    });
+  
+    // Xác định kiểu trả về từ returnType
+    const returnType = this.getCppType(metadata.returnType || 'auto');
+  
+    let outputFormatting = '';
+    if (returnType === 'std::vector<int>') {
+      outputFormatting = `
+      cout << "[";
+      for (size_t i = 0; i < result.size(); ++i) {
+          cout << result[i];
+          if (i < result.size() - 1) cout << ",";
+      }
+      cout << "]" << endl;
+  `;
+    } else if (returnType === 'std::vector<std::string>') {
+      outputFormatting = `
+      cout << "[";
+      for (size_t i = 0; i < result.size(); ++i) {
+          cout << "\\""<< result[i] <<"\\"";
+          if (i < result.size() - 1) cout << ",";
+      }
+      cout << "]" << endl;
+  `;
+    } else {
+      outputFormatting = `
+     for (int num : result) {
+    cout << num << " ";
+}
+cout << endl;
+  `;
     }
   
     const wrapper = `
-  #include <iostream>
-  #include <vector>
-  #include <string>
-  #include <sstream>
-  #include <nlohmann/json.hpp>
-  
-  using json = nlohmann::json;
-  
+  ${includes}
   ${userCode}
-  
   int main() {
-      std::string input;
-      std::string line;
-      while (std::getline(std::cin, line)) {
-          input += line;
-      }
-      
-      json test_case;
-      try {
-          test_case = json::parse(input);
-      } catch (const json::parse_error& e) {
-          std::cerr << "JSON parse error: " << e.what() << std::endl;
-          return 1;
-      }
-      
-      ${metadata.params.map((p, index) => {
-        const cppType = this.getCppType(p.type);
-        return `${cppType} param${index} = test_case["${p.name}"].get<${cppType}>();`;
-      }).join('\n    ')}
-      
+  ${inputParsing}
       Solution solution;
-      auto result = solution.${functionName}(${metadata.params.map((_, index) => `param${index}`).join(', ')});
-      
-      json output;
-      output["result"] = result;
-      std::cout << output.dump() << std::endl;
-      
+      ${returnType} result = solution.${functionName}(${paramArgs});
+  ${outputFormatting}
       return 0;
-  }`;
-  
-    const cleanWrapper = wrapper
-      .replace(/[^\x20-\x7E\n\t]/g, '')
-      .replace(/\r\n/g, '\n')
-      .trim();
-    console.log('Cleaned wrapper:\n', cleanWrapper);
-    console.log('Hex dump:\n', Buffer.from(cleanWrapper).toString('hex'));
-    return cleanWrapper;
   }
+  `;
+  
+    return wrapper.replace(/[^\x20-\x7E\n\t]/g, '').replace(/\r\n/g, '\n').trim();
+  }
+  
   private static generateJavaWrapper(
     userCode: string,
     metadata: ProblemMetadata,
     functionName: string
   ): string {
-    // Nếu userCode đã chứa main, trả về code sạch
     if (userCode.includes('main')) {
       const cleanCode = userCode
         .replace(/[^\x20-\x7E\n\t]/g, '')
@@ -160,36 +217,54 @@ stdin.on('end', () => {
       return cleanCode;
     }
   
-    const wrapper = `
-  import java.util.Scanner;
-  
-  ${userCode}
-  
-  class Main {
-      public static void main(String[] args) {
-          Scanner scanner = new Scanner(System.in);
-          String inputStr = scanner.nextLine();
-          
-          // Parse JSON thủ công cho trường hợp {"x": số}
-          String valueStr = inputStr.substring(inputStr.indexOf(":") + 1, inputStr.lastIndexOf("}")).trim();
-          ${metadata.params.map((p, index) => {
-            const javaType = this.getJavaType(p.type);
-            return `${javaType} param${index} = ${javaType === 'int' ? 'Integer.parseInt(valueStr)' : 'valueStr'};`;
-          }).join('\n        ')}
-          
-          Solution solution = new Solution();
-          Object result = solution.${functionName}(${metadata.params.map((_, index) => `param${index}`).join(', ')});
-          System.out.println(result);
+    const paramParsing = metadata.params.map((p, index) => {
+      const javaType = this.getJavaType(p.type);
+      if (javaType === 'int') {
+        return `int param${index} = Integer.parseInt(valueMap.get("${p.name}"));`;
       }
-  }
+      if (javaType === 'String') {
+        return `String param${index} = valueMap.get("${p.name}");`;
+      }
+      if (javaType === 'int[]') {
+        return `int[] param${index} = Arrays.stream(valueMap.get("${p.name}").replaceAll("[\\[\\]\\s]", "").split(",")).filter(s -> !s.isEmpty()).mapToInt(Integer::parseInt).toArray();`;
+      }
+      if (javaType === 'String[]') {
+        return `String[] param${index} = valueMap.get("${p.name}").replaceAll("[\\[\\]\\s]", "").split(",");`;
+      }
+      return `Object param${index} = valueMap.get("${p.name}");`;
+    }).join('\n        ');
+  
+    const wrapper = `
+import java.util.*;
+import java.util.stream.*;
+
+${userCode}
+
+class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String inputStr = scanner.nextLine();
+
+        Map<String, String> valueMap = new HashMap<>();
+        inputStr = inputStr.trim().replaceAll("[\\\\{\\\\}\\\"]", "");
+        String[] pairs = inputStr.split(",");
+        for (String pair : pairs) {
+            String[] kv = pair.split(":", 2);
+            if (kv.length == 2) {
+                valueMap.put(kv[0].trim(), kv[1].trim());
+            }
+        }
+
+        ${paramParsing}
+
+        Solution solution = new Solution();
+        Object result = solution.${functionName}(${metadata.params.map((_, index) => `param${index}`).join(', ')});
+        System.out.println(result);
+    }
+}
   `;
   
-    const cleanWrapper = wrapper
-      .replace(/[^\x20-\x7E\n\t]/g, '')
-      .replace(/\r\n/g, '\n')
-      .trim();
-    
-    return cleanWrapper;
+    return wrapper.replace(/[^\x20-\x7E\n\t]/g, '').replace(/\r\n/g, '\n').trim();
   }
 
   private static getCppType(type: string): string {
@@ -201,6 +276,7 @@ stdin.on('end', () => {
       default: return 'auto';
     }
   }
+  
 
   private static getJavaType(type: string): string {
     switch (type) {

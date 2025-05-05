@@ -162,7 +162,11 @@ const ContestLeaderboard = ({ contestId, currentUserScore }: ContestLeaderboardP
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end space-x-2 text-gray-500">
                       <Clock className="w-4 h-4" />
-                      <span>{moment(entry.submissionTime).format('HH:mm:ss DD/MM/YYYY')}</span>
+                      <span>
+                        {entry.submissionTime
+                          ? moment(entry.submissionTime).format('HH:mm:ss DD/MM/YYYY')
+                          : "Chưa nộp"}
+                      </span>
                     </div>
                   </td>
                 </motion.tr>

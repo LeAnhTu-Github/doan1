@@ -22,16 +22,16 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId,
-      }
-    });
+    // const ownCourse = await db.course.findUnique({
+    //   where: {
+    //     id: params.courseId,
+    //     userId,
+    //   }
+    // });
 
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    // if (!ownCourse) {
+    //   return new NextResponse("Unauthorized", { status: 401 });
+    // }
 
     const chapter = await db.chapter.findUnique({
       where: {

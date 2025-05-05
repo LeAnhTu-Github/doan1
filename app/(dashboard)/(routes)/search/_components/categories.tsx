@@ -28,6 +28,17 @@ const iconMap: Record<Category["name"], IconType> = {
   "Engineering": FcEngineering,
 };
 
+// Thêm mapping sub name
+const subNameMap: Record<Category["name"], string> = {
+  "Music": "Âm nhạc",
+  "Photography": "Nhiếp ảnh",
+  "Fitness": "Thể thao",
+  "Accounting": "Kế toán",
+  "Computer Science": "Tin học",
+  "Filming": "Điện ảnh",
+  "Engineering": "Kỹ thuật",
+};
+
 export const Categories = ({
   items,
 }: CategoriesProps) => {
@@ -37,6 +48,7 @@ export const Categories = ({
         <CategoryItem
           key={item.id}
           label={item.name}
+          subLabel={subNameMap[item.name]}
           icon={iconMap[item.name]}
           value={item.id}
         />

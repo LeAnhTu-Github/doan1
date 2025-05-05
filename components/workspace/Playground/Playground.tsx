@@ -211,9 +211,27 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId, problem, setSuccess,
             });
 
             const parsedOutput = result.trim();
+            let actual, expected;
+
+            try {
+              actual = JSON.parse(parsedOutput);
+            } catch {
+              actual = parsedOutput;
+            }
+
+            try {
+              expected = typeof testCase.expected === "string"
+                ? JSON.parse(testCase.expected)
+                : testCase.expected;
+            } catch {
+              expected = testCase.expected;
+            }
+
+            const passed = JSON.stringify(actual) === JSON.stringify(expected);
+
             return {
               output: parsedOutput,
-              passed: parsedOutput === testCase.expected.trim()
+              passed,
             };
           })
         );
@@ -312,7 +330,7 @@ const Playground: React.FC<PlaygroundProps> = ({ ProblemId, problem, setSuccess,
 
         setSubmissionScore({
           score: data.results.score,
-          totalScore: 10,
+          totalScore: 100,
           solvedCount: 0
         });
         setShowSuccessModal(true);

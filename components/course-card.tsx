@@ -11,6 +11,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { User } from "@prisma/client";
 import { courseRegister } from "@prisma/client";
+
 interface CourseCardProps {
   user: User;
   regis: courseRegister | undefined;
@@ -22,6 +23,18 @@ interface CourseCardProps {
   progress: number | null;
   category: string;
 }
+
+// Mapping category English -> Vietnamese
+const categoryViMap: Record<string, string> = {
+  "Music": "Âm nhạc",
+  "Photography": "Nhiếp ảnh",
+  "Fitness": "Thể thao",
+  "Accounting": "Kế toán",
+  "Computer Science": "Tin học",
+  "Filming": "Điện ảnh",
+  "Engineering": "Kỹ thuật",
+  // Thêm các category khác nếu có
+};
 
 export const CourseCard = ({
   user,
@@ -51,10 +64,14 @@ export const CourseCard = ({
       class: "",
     },
   });
-  let check = false;
+
+  // Lấy tên tiếng Việt cho category
+  const categoryVi = categoryViMap[category] || category;
+
+  // Kiểm tra đã đăng ký thành công
+  const isRegistered = !!regis?.isRegister;
+
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
-    // Set eventId value before submitting
-    
     data.courseId = id;
     data.userId = user?.id;
     data.masv = user?.masv;
@@ -71,9 +88,18 @@ export const CourseCard = ({
       })
       .catch(() => {
         toast.error("Đăng kí thất bại.");
-      })
-      .finally(() => {});
+      });
   };
+
+  // Xử lý khi bấm "Xem"
+  const handleView = () => {
+    if (!isRegistered) {
+      toast.error("Bạn cần đăng ký khoá học để có thể tham gia");
+      return;
+    }
+    router.push(`/courses/${id}`);
+  };
+
   return (
     <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
       <div className="relative w-full aspect-video rounded-md overflow-hidden">
@@ -83,7 +109,7 @@ export const CourseCard = ({
         <div className="text-lg md:text-base font-medium group-hover:text-sky-700 transition line-clamp-2">
           {title}
         </div>
-        <p className="text-xs text-muted-foreground">{category}</p>
+        <p className="text-xs text-muted-foreground">{categoryVi}</p>
         <div className="my-3 flex items-center gap-x-2 text-sm md:text-xs">
           <div className="flex items-center gap-x-1 text-slate-500">
             <IconBadge size="sm" icon={BookOpen} />
@@ -92,7 +118,7 @@ export const CourseCard = ({
             </span>
           </div>
         </div>
-        {progress !== null && regis?.isRegister ? (
+        {progress !== null && isRegistered ? (
           <>
             <CourseProgress
               variant={progress === 100 ? "success" : "default"}
@@ -101,36 +127,27 @@ export const CourseCard = ({
             />
             <div className="flex justify-between mt-2">
               <button
-                className="btn btn-outline btn-success btn-sm"
-                onClick={handleSubmit(onSubmit)}
-              >
-                Đăng kí
-              </button>
-              <button
                 className="btn btn-outline btn-info btn-sm"
-                onClick={() => router.push(`/courses/${id}`)}
+                onClick={handleView}
               >
-                Xem
+                Tham gia
               </button>
             </div>
           </>
         ) : (
           <div className="flex justify-between">
-            <>
-              <button
-                className="btn btn-outline btn-success btn-sm"
-                onClick={handleSubmit(onSubmit)}
-              >
-                Đăng kí
-              </button>
-
-              <button
-                className="btn btn-outline btn-info btn-sm"
-                onClick={() => router.push(`/courses/${id}`)}
-              >
-                Xem
-              </button>
-            </>
+            <button
+              className="btn btn-outline btn-success btn-sm"
+              onClick={handleSubmit(onSubmit)}
+            >
+              Đăng kí
+            </button>
+            <button
+              className="btn btn-outline btn-info btn-sm"
+              onClick={handleView}
+            >
+              Xem
+            </button>
           </div>
         )}
       </div>

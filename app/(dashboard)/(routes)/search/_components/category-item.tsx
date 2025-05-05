@@ -14,12 +14,14 @@ interface CategoryItemProps {
   label: string;
   value?: string;
   icon?: IconType;
+  subLabel?: string
 };
 
 export const CategoryItem = ({
   label,
   value,
   icon: Icon,
+  subLabel
 }: CategoryItemProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -51,8 +53,10 @@ export const CategoryItem = ({
       type="button"
     >
       {Icon && <Icon size={20} />}
-      <div className="truncate">
-        {label}
+      <div className="truncate flex flex-col items-start">
+        {subLabel && (
+          <span className="text-xs text-slate-500 leading-none">{subLabel}</span>
+        )}
       </div>
     </button>
   )

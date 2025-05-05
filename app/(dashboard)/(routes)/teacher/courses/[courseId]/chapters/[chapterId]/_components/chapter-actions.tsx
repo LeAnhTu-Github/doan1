@@ -33,17 +33,17 @@ export const ChapterActions = ({
         await axios.patch(
           `/api/courses/${courseId}/chapters/${chapterId}/unpublish`
         );
-        toast.success("Chapter unpublished");
+        toast.success("Đã ngừng đăng tải chương");
       } else {
         await axios.patch(
           `/api/courses/${courseId}/chapters/${chapterId}/publish`
         );
-        toast.success("Chapter published");
+        toast.success("Đã đăng tải chương");
       }
 
       router.refresh();
     } catch {
-      toast.error("Something went wrong");
+      toast.error("Có lỗi xảy ra");
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +55,11 @@ export const ChapterActions = ({
 
       await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
 
-      toast.success("Chapter deleted");
+      toast.success("Đã xoá chương");
       router.refresh();
       router.push(`/teacher/courses/${courseId}`);
     } catch {
-      toast.error("Something went wrong");
+      toast.error("Có lỗi xảy ra");
     } finally {
       setIsLoading(false);
     }

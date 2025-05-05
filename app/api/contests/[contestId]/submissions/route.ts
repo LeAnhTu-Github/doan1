@@ -178,20 +178,53 @@ export async function POST(
       0
     );
 
-    await db.contestParticipant.upsert({
-      where: { 
+    await db.contestParticipant.update({
+      where: {
         contestId_userId: {
           contestId: contestId,
-          userId: userId
-        }
+          userId: userId,
+        },
       },
-      update: { score: totalScore },
-      create: { 
-        contestId: contestId,
-        userId: userId,
-        score: totalScore
+      data: {
+        finishedAt: new Date(),
+        score: totalScore,
       },
     });
+
+    // 2. Lấy lại toàn bộ participant để tính rank
+    const allParticipants = await db.contestParticipant.findMany({
+      where: { contestId },
+      select: {
+        userId: true,
+        score: true,
+        finishedAt: true,
+      },
+    });
+
+    // 3. Sắp xếp theo score giảm dần, finishedAt tăng dần
+    const ranked = allParticipants
+      .filter(p => p.finishedAt && p.userId)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (!a.finishedAt) return 1;
+        if (!b.finishedAt) return -1;
+        return new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime();
+      });
+
+    // 4. Cập nhật rank cho từng thí sinh
+    await Promise.all(
+      ranked.map((p, idx) =>
+        db.contestParticipant.update({
+          where: {
+            contestId_userId: {
+              contestId,
+              userId: p.userId as string,
+            },
+          },
+          data: { rank: idx + 1 },
+        })
+      )
+    );
 
     // Trả về kết quả
     return NextResponse.json({

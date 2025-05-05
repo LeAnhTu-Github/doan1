@@ -23,19 +23,35 @@ const ProcessPage = async ({ params }: { params: { processId: string } }) => {
     return redirect("/");
   }
 
-  const regisUser = await db.courseRegister.findMany({
-    where: {
-      courseId: params.processId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+  const chapters = await db.chapter.findMany({
+    where: { courseId: params.processId },
+    select: { id: true },
   });
+  const chapterIds = chapters.map((c) => c.id);
+
+  const regisUser = await db.courseRegister.findMany({
+    where: { courseId: params.processId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const userProgressList = await db.userProgress.findMany({
+    where: { chapterId: { in: chapterIds } },
+  });
+
+  const dataWithProgress = regisUser.map((user) => {
+    const completed = userProgressList.filter(
+      (up) => up.userId === user.userId && up.isCompleted
+    ).length;
+    const progress =
+      chapters.length > 0 ? Math.round((completed / chapters.length) * 100) : 0;
+    return { ...user, progress };
+  });
+
   const courses = await getCourses({
     userId,
     ...URLSearchParams,
   });
-  const mergedData = regisUser.map((user) => {
+  const mergedData = dataWithProgress.map((user) => {
     // Find the corresponding course for the user
     const course = courses.find((course) => course.id === user.courseId);
 
@@ -48,13 +64,13 @@ const ProcessPage = async ({ params }: { params: { processId: string } }) => {
     return user;
   });
   // Add missing properties to the events array
-  const updatedEvents = regisUser.map((event) => ({
+  const updatedEvents = dataWithProgress.map((event) => ({
     ...event,
     ...mergedData.find((course) => course.id === event.courseId),
   })) as [];
   return (
     <div className="p-6">
-      <DataTable columns={columns} data={updatedEvents} users={regisUser} />
+      <DataTable columns={columns} data={dataWithProgress} users={regisUser} />
     </div>
   );
 };

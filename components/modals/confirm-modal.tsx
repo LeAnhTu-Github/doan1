@@ -28,15 +28,15 @@ export const ConfirmModal = ({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Bạn có chắc muốn xoá?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone.
+            Điều này sẽ xoá phần tử đã chọn.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Continue
+            Xoá
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

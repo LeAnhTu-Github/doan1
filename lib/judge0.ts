@@ -1,3 +1,5 @@
+import { Buffer } from "buffer"; // Nếu dùng Node.js, hoặc dùng global Buffer nếu có
+
 const JUDGE0_HOST = "uneti.ngrok.app";
 const JUDGE0_PROTOCOL = "https";
 
@@ -51,35 +53,44 @@ const apiHeaders = {
 
 export async function submitCode(request: SubmissionRequest): Promise<string> {
   try {
-    // Determine if we should use base64 encoding based on the language
-    // C++ submissions need base64 encoding to avoid character encoding issues
     const languageId = request.language_id;
-    const useBase64 = languageId === languageMap.cpp;
-    
-    const response = await fetch(`${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=false`, {
-      method: "POST",
-      headers: apiHeaders,
-      body: JSON.stringify(request),
-    });
+    // Gửi base64 cho cả C++ và Python
+    const useBase64 = languageId === languageMap.cpp || languageId === languageMap.python;
+
+    const body = { ...request };
+    if (useBase64) {
+      body.source_code = Buffer.from(request.source_code).toString("base64");
+      if (body.stdin) {
+        body.stdin = Buffer.from(body.stdin).toString("base64");
+      }
+    }
+
+    const response = await fetch(
+      `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=false`,
+      {
+        method: "POST",
+        headers: apiHeaders,
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!response.ok) {
-      throw new Error(`Failed to submit code: ${response.statusText}`);
+      throw new Error(`Gửi mã nguồn thất bại: ${response.statusText}`);
     }
 
     const data: SubmissionResponse = await response.json();
     return data.token;
   } catch (error) {
-    console.error('Submit code error:', error);
+    console.error('Lỗi gửi mã nguồn:', error);
     throw error;
   }
 }
 
 export async function getSubmissionResult(token: string): Promise<Judge0Result> {
   try {
-    // For C++ submissions, we need to handle base64-encoded responses
-    // We'll check the token format to determine if it's a C++ submission
-    // This is a simple heuristic - in a real implementation, you might want to
-    // store the language ID with the token or use a more robust method
+    // Với C++, cần xử lý kết quả trả về dạng base64
+    // Kiểm tra token để xác định có phải là bài C++ không
+    // Đây chỉ là heuristic đơn giản - thực tế nên lưu languageId cùng token hoặc dùng cách khác chắc chắn hơn
     const isCppSubmission = token.startsWith('cpp_') || token.includes('cpp');
     const useBase64 = isCppSubmission;
     
@@ -89,63 +100,101 @@ export async function getSubmissionResult(token: string): Promise<Judge0Result> 
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to get result: ${response.statusText}`);
+      throw new Error(`Lấy kết quả thất bại: ${response.statusText}`);
     }
 
-    return await response.json();
+    const result: Judge0Result = await response.json();
+    console.log('Judge0 result:', result);
+    return result;
   } catch (error) {
-    throw new Error(`Result fetch error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`Lỗi lấy kết quả: ${error instanceof Error ? error.message : "Không rõ lỗi"}`);
+  }
+}
+
+function decodeBase64(str?: string) {
+  if (!str) return "";
+  // Node.js hoặc trình duyệt hiện đại đều hỗ trợ atob/btoa hoặc Buffer
+  try {
+    if (typeof window !== "undefined" && window.atob) {
+      // Trình duyệt
+      return decodeURIComponent(escape(window.atob(str)));
+    } else {
+      // Node.js
+      return Buffer.from(str, "base64").toString("utf-8");
+    }
+  } catch {
+    return str;
   }
 }
 
 export async function executeCode(request: SubmissionRequest): Promise<string> {
   try {
-    // Determine if we should use base64 encoding based on the language
-    // C++ submissions need base64 encoding to avoid character encoding issues
     const languageId = request.language_id;
-    const useBase64 = languageId === languageMap.cpp;
+    const useBase64 = languageId === languageMap.cpp || languageId === languageMap.python;
+
+    const body = { ...request };
+    if (useBase64) {
+      body.source_code = Buffer.from(request.source_code).toString("base64");
+      if (body.stdin) {
+        body.stdin = Buffer.from(body.stdin).toString("base64");
+      }
+    }
+    // KHÔNG mã hóa body.stdin!
+
+    // Log để debug
+    console.log("DEBUG: body gửi lên Judge0:", body);
+
     const url = `${JUDGE0_PROTOCOL}://${JUDGE0_HOST}/submissions?base64_encoded=${useBase64}&wait=true`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: apiHeaders,
-      body: JSON.stringify(request),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Error response body:', errorText);
-      throw new Error(`Failed to execute code: ${response.status} ${response.statusText}. ${errorText}`);
+      console.error('Nội dung lỗi trả về:', errorText);
+      throw new Error(`Thực thi mã nguồn thất bại: ${response.status} ${response.statusText}. ${errorText}`);
     }
 
     const result: Judge0Result = await response.json();
-    if (result.stderr) {
-      console.error('Runtime error:', result.stderr);
-      return `Runtime Error: ${result.stderr}`;
+    const isBase64 = languageId === languageMap.cpp || languageId === languageMap.python;
+
+    // Giải mã nếu là base64
+    const stdout = isBase64 ? decodeBase64(result.stdout) : result.stdout;
+    const stderr = isBase64 ? decodeBase64(result.stderr) : result.stderr;
+    const compile_output = isBase64 ? decodeBase64(result.compile_output) : result.compile_output;
+
+    console.log('Judge0 result:', { ...result, stdout, stderr, compile_output });
+
+    if (stderr) {
+      console.error('Lỗi khi chạy chương trình:', stderr);
+      return `Lỗi khi chạy chương trình: ${stderr}`;
     }
 
-    if (result.compile_output) {
-      console.error('Compilation error:', result.compile_output);
-      return `Compilation Error: ${result.compile_output}`;
+    if (compile_output) {
+      console.error('Lỗi biên dịch:', compile_output);
+      return `Lỗi biên dịch: ${compile_output}`;
     }
 
-    if (!result.stdout && !result.stderr && !result.compile_output) {
-      console.warn('No output received from Judge0');
-      return "No output received from the judge";
+    if (!stdout && !stderr && !compile_output) {
+      console.warn('Không có kết quả trả về từ Judge0');
+      return "Không có kết quả trả về từ Judge0";
     }
 
-    return result.stdout || "No output";
+    return stdout || "Không có đầu ra";
   } catch (error) {
-    console.error('Detailed execution error:', {
-      name: error instanceof Error ? error.name : 'Unknown error type',
+    console.error('Chi tiết lỗi thực thi:', {
+      name: error instanceof Error ? error.name : 'Không rõ loại lỗi',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
     
     if (error instanceof Error) {
-      return `Error: ${error.message}`;
+      return `Lỗi: ${error.message}`;
     }
-    return "Unknown execution error occurred";
+    return "Đã xảy ra lỗi không xác định khi thực thi";
   }
 }
 
@@ -156,7 +205,7 @@ export async function checkJudge0Health(): Promise<boolean> {
       headers: apiHeaders
     });
     
-    console.log('Health check response:', {
+    console.log('Kết quả kiểm tra health:', {
       status: response.status,
       ok: response.ok,
       statusText: response.statusText
@@ -164,13 +213,13 @@ export async function checkJudge0Health(): Promise<boolean> {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Health check error response:', errorText);
+      console.error('Lỗi khi kiểm tra health:', errorText);
     }
 
     return response.ok;
   } catch (error) {
-    console.error('Health check error:', {
-      name: error instanceof Error ? error.name : 'Unknown error type',
+    console.error('Lỗi kiểm tra health:', {
+      name: error instanceof Error ? error.name : 'Không rõ loại lỗi',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });

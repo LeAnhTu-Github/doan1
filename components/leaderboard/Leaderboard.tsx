@@ -188,24 +188,26 @@ export default function Leaderboard() {
       </div>
 
       {/* Top 3 Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:mt-8">
-          {topThree[1] && <TopThreeCard entry={topThree[1]} totalProblems={totalProblems} />}
+      {leaderboard.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:mt-8">
+            {topThree[1] && <TopThreeCard entry={topThree[1]} totalProblems={totalProblems} />}
+          </div>
+          <div className="md:-mt-4">
+            {topThree[0] && <TopThreeCard entry={topThree[0]} totalProblems={totalProblems} />}
+          </div>
+          <div className="md:mt-8">
+            {topThree[2] && <TopThreeCard entry={topThree[2]} totalProblems={totalProblems} />}
+          </div>
         </div>
-        <div className="md:-mt-4">
-          {topThree[0] && <TopThreeCard entry={topThree[0]} totalProblems={totalProblems} />}
-        </div>
-        <div className="md:mt-8">
-          {topThree[2] && <TopThreeCard entry={topThree[2]} totalProblems={totalProblems} />}
-        </div>
-      </div>
+      )}
 
       {/* Leaderboard Table */}
       <Card className="p-6">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-24">Xếp hạng</TableHead>
+              <TableHead className="w-28">Xếp hạng</TableHead>
               <TableHead>Thông tin</TableHead>
               <TableHead>Lớp</TableHead>
               <TableHead>Điểm</TableHead>
@@ -213,53 +215,65 @@ export default function Leaderboard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentPageData.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell className="font-medium text-lg">#{entry.rank}</TableCell>
-                <TableCell>
-                  <UserCell user={entry.user} rank={entry.rank} />
-                </TableCell>
-                <TableCell>{entry.user?.class}</TableCell>
-                <TableCell>{entry.totalScore.toFixed(2)}</TableCell>
-                <TableCell>
-                  {entry.solvedCount} / {totalProblems} Bài
+            {currentPageData.length > 0 ? (
+              currentPageData.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell className="font-medium text-lg">#{entry.rank}</TableCell>
+                  <TableCell>
+                    <UserCell user={entry.user} rank={entry.rank} />
+                  </TableCell>
+                  <TableCell>{entry.user?.class}</TableCell>
+                  <TableCell>{entry.totalScore.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {entry.solvedCount} / {totalProblems} Bài
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5}>
+                  <div className="text-center text-gray-500 py-8">
+                    Không có dữ liệu bảng xếp hạng.
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
 
         {/* Pagination */}
-        <div className="mt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                />
-              </PaginationItem>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
+        {leaderboard.length > 0 && totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  />
                 </PaginationItem>
-              ))}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
     </div>
   );
