@@ -1,87 +1,119 @@
-# Build an LMS Platform: Next.js 13,  React, Mux, Prisma, Tailwind, MySQL 
+🚀 Key Features
+🧑‍💻 Online Coding Environment
+Powered by Monaco Editor (VS Code experience in the browser)
 
-This is a repository for Build an LMS Platform: Next.js 13,  React, Mux, Prisma, Tailwind, MySQL 
+Real-time code execution via Judge0 (self-hosted with Docker)
 
-Key Features:
+Supports multiple programming languages
 
-- Browse & Filter Courses
-- Mark Chapters as Completed or Uncompleted
-- Progress Calculation of each Course
-- Student Dashboard
-- Teacher mode
-- Create new Courses
-- Create new Chapters
-- Easily reorder chapter position with drag n’ drop
-- Upload thumbnails, attachments and videos using UploadThing
-- Video processing using Mux
-- HLS Video player using Mux
-- Rich text editor for chapter description
-- Authentication using Clerk
-- ORM using Prisma
-- MySQL database using Planetscale
+Test case support (visible and hidden) for each coding problem
 
-### Prerequisites
+Instant feedback on submission results (output, status, error, etc.)
 
-**Node version 18.x.x**
+📚 Course Management
+Browse and filter available courses
 
-### Cloning the repository
+Track course progress
 
-```shell
-git clone https://github.com/LeAnhTu-Github/doan1
-```
+Mark chapters as completed or incomplete
 
-### Install packages
+Rich text editor for creating course/chapter content
 
-```shell
-npm i
-```
+Upload thumbnails, attachments, and videos
 
-### Setup .env file
+👨‍🏫 Teacher Mode
+Create new courses and chapters
 
+Reorder chapters easily via drag & drop
 
-```js
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=
+Manage coding problems and test cases
 
-DATABASE_URL=
+Analytics and student performance tracking (coming soon)
 
-UPLOADTHING_SECRET=
-UPLOADTHING_APP_ID=
+🧑‍🎓 Student Dashboard
+View enrolled courses and chapter progress
 
-MUX_TOKEN_ID=
-MUX_TOKEN_SECRET=
+Access coding problems and submit solutions
 
-STRIPE_API_KEY=
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-STRIPE_WEBHOOK_SECRET=
+Track achievements and completion stats
 
-NEXT_PUBLIC_TEACHER_ID=
-```
+🔒 Authentication
+Built with NextAuth.js
 
-### Setup Prisma
+Supports credentials, GitHub, Google, and more
 
-Add MySQL Database (I used PlanetScale)
+Session-based user access (students vs. teachers)
 
-```shell
-npx prisma generate
-npx prisma db push
+🧰 Tech Stack
+Frontend: Next.js 13 (App Router), React 18, Tailwind CSS, Framer Motion
 
-```
+Editor: Monaco Editor
 
-### Start the app
+Code Execution: Judge0 (Docker-based, self-hosted)
 
-```shell
-npm run dev
-```
+Authentication: NextAuth.js
 
-## Available commands
+Database: MongoDB (via Prisma)
 
-Running commands with npm `npm run [command]`
+File Upload: UploadThing
 
-| command         | description                              |
-| :-------------- | :--------------------------------------- |
-| `dev`           | Starts a development instance of the app |
+Video Streaming: Mux (upload + HLS playback)
+
+State Management: Zustand
+
+UI Libraries: Radix UI, Lucide, Ant Design, DaisyUI
+
+🛠 Project Scripts
+bash
+Copy
+Edit
+npm run dev         # Run in development mode
+npm run build       # Build for production
+npm run start       # Start production build
+npm run lint        # Run linter
+🔐 Environment Variables
+Create a .env file in the root of your project with the following keys:
+
+env
+Copy
+Edit
+DATABASE_URL="mongodb+srv://<user>:<pass>@<cluster>/<db>"
+NEXTAUTH_SECRET="<your_nextauth_secret>"
+NEXTAUTH_URL="http://localhost:3000"
+
+# OAuth providers (optional)
+GITHUB_ID=""
+GITHUB_SECRET=""
+
+# Judge0 Self-hosted
+JUDGE0_API_URL="http://localhost:2358"
+
+# Mux
+MUX_TOKEN_ID=""
+MUX_TOKEN_SECRET=""
+
+# UploadThing
+UPLOADTHING_SECRET=""
+UPLOADTHING_APP_ID=""
+🧪 Judge0 Setup (Self-Hosted via Docker)
+This project uses a custom Judge0 Docker deployment for secure and scalable code evaluation. Here's a quick setup:
+
+bash
+Copy
+Edit
+git clone https://github.com/judge0/judge0.git
+cd judge0
+docker compose -f docker-compose.yml up -d
+Make sure to update JUDGE0_API_URL in your .env to point to your Docker container (e.g., http://localhost:2358).
+
+📂 Project Structure
+bash
+Copy
+Edit
+/app            # Next.js App Router pages and layout
+/components     # Reusable UI components
+/db             # Prisma schema + MongoDB configuration
+/editor         # Monaco editor wrapper + integrations
+/actions        # Server actions for authentication, data mutation, etc.
+/libs           # Utility functions and config
+/hooks          # Custom React hooks
